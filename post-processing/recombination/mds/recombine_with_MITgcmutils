@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+# script to recombine MITgcm mds output files
+# using the MITgcmutils package.
+# USAGE: ./recombine_with_MITgcmutils datadir
+# Creates a 'recombined' subdirectory with new outputs
+# R. Dussin 2018
+
+import MITgcmutils
+import sys, os
+import subprocess as sp
+
+# read the output directory as argument
+datadir = sys.argv[-1]
+# create a subdirectory for recombined data
+dataout = datadir + os.sep + 'recombined'
+sp.call('mkdir ' + dataout,shell=True) 
+
+# copy some non-splitted variables
+for var in ['DRC','DRF','RC','RF','PHref','RhoRef']:
+	sp.call('cp '+ datadir + os.sep + var + '* ' + dataout + os.sep + '.',shell=True)
+
+#----------- list all variables ---------------------
+# different timesteps for one variables are treated as separate variables
+unixcmd = "ls " + datadir + " | grep '001.001.meta' | sed -e 's/\.001.001.meta/ /g' | awk '{ print $1 }' | uniq"
+list_variables=sp.check_output(unixcmd,shell=True).replace('\n',' ').split()
+
+#----------- recombination step --------------------
+for var in list_variables:
+	if var.find('.') == -1:
+		# time invariant : doesn't have timestep
+		tmp = MITgcmutils.mds.rdmds(datadir+ os.sep + var)
+		MITgcmutils.mds.wrmds(dataout + os.sep + var,tmp)
+	else:
+		# time varying : use timestep
+		var, ctimestep = var.replace('.',' ').split()
+		timestep=int(ctimestep)
+		tmp = MITgcmutils.mds.rdmds(datadir+ os.sep + var,itrs=timestep)
+		MITgcmutils.mds.wrmds(dataout + os.sep + var,tmp,itr=timestep)
