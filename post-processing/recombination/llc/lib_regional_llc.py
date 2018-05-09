@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pylab as plt
 from mpl_toolkits.basemap import Basemap
-from matplotlib import cm
+from matplotlib import cm, colors
 
 class regional_llc():
 
@@ -117,21 +117,26 @@ class regional_llc():
 		# do the actual plot
 		plt.figure(figsize=[10,8])
 		ncontours=45 # number of contours could be moved to input dict_plt
+		norm = colors.Normalize(vmin=dict_plt['vmin'], vmax=dict_plt['vmax'])
 		if self.domain == 'ASTE':
 			m = Basemap(projection='npaeqd',boundinglat=-0,lon_0=320,resolution='l')
 			xx1,yy1 = m(XCs[0],YCs[0])
-			m.contourf(xx1,yy1,np.ma.masked_values(FIELDs[0][:,:],0),ncontours,vmin=dict_plt['vmin'],\
-			vmax=dict_plt['vmax'],cmap=dict_plt['colorbar'])
+			C=m.contourf(xx1,yy1,np.ma.masked_values(FIELDs[0][:,:],0),ncontours,norm=norm,\
+			cmap=dict_plt['colorbar'])
+			plt.colorbar(C, norm=norm)
 			xx3,yy3 = m(XCs[2],YCs[2])
-			m.contourf(xx3,yy3,np.ma.masked_values(FIELDs[2][:,:],0),ncontours,vmin=dict_plt['vmin'],\
-			vmax=dict_plt['vmax'],cmap=dict_plt['colorbar'])
+			m.contourf(xx3,yy3,np.ma.masked_values(FIELDs[2][:,:],0),ncontours,norm=norm,\
+			cmap=dict_plt['colorbar'])
 			xx4,yy4 = m(XCs[3],YCs[3])
-			m.contourf(xx4,yy4,np.ma.masked_values(FIELDs[3][:,:],0),ncontours,vmin=dict_plt['vmin'],\
-			vmax=dict_plt['vmax'],cmap=dict_plt['colorbar'])
+			m.contourf(xx4,yy4,np.ma.masked_values(FIELDs[3][:,:],0),ncontours,norm=norm,\
+			cmap=dict_plt['colorbar'])
 			xx5,yy5 = m(XCs[4],YCs[4])
-			m.contourf(xx5,yy5,np.ma.masked_values(FIELDs[4][:,:],0),ncontours,vmin=dict_plt['vmin'],\
-			vmax=dict_plt['vmax'],cmap=dict_plt['colorbar'])
-			plt.colorbar()
+			# occasionally we can run into issues with input files
+			field4 = np.ma.masked_values(FIELDs[4][:,:],0)
+			field4[np.where(XCs[4] == 0)] = 0
+			field4 = np.ma.masked_values(field4,0)
+			m.contourf(xx5,yy5,field4,ncontours,norm=norm,\
+			cmap=dict_plt['colorbar'])
 			m.fillcontinents(color='grey',lake_color='white')
 			m.drawcoastlines()
 			plt.show()

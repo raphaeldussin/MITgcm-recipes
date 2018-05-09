@@ -11,7 +11,6 @@ aste.plot_map_field('/Users/raphael/WORK/ASTE/test_results','T',dict_plt_sst,lev
 aste.plot_map_field('/Users/raphael/WORK/ASTE/test_results','S',dict_plt_sss,level=0,timestep=2307,precision='single')
 aste.plot_map_field('/Users/raphael/WORK/ASTE/test_results','Eta',dict_plt_ssh,timestep=2307,precision='single')
 
-# bug plot
 aste.plot_map_field('/Users/raphael/WORK/ASTE/test_results/','',dict_plt_sst,level=0,filealt='../input_files/WOA09v2_T_llc270_JAN.bin',precision='double')
 
 # on llc global grid
