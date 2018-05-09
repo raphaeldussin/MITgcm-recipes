@@ -139,6 +139,8 @@ class regional_llc():
 			cmap=dict_plt['colorbar'])
 			m.fillcontinents(color='grey',lake_color='white')
 			m.drawcoastlines()
+			m.drawparallels(np.arange(0,90,30))
+			m.drawmeridians(np.arange(0,360,90))
 			plt.show()
 
 		return None
