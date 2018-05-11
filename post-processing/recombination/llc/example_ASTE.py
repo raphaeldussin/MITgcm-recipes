@@ -19,7 +19,7 @@ aste.plot_map_field(dir_results,'Depth',dict_plt_depth,precision='single')
 aste.plot_map_field(dir_inputs,'',dict_plt_sst,level=0,filealt='WOA09v2_T_llc270_JAN.bin',precision='double',\
 dirxy=dir_results)
 
-aste.plot_map_field(dir_results,'',dict_plt_bathy,filealt='bathy_fill9iU42Ef_noStLA_v1.bin',precision='double',\
+aste.plot_map_field(dir_inputs,'',dict_plt_bathy,filealt='bathy_fill9iU42Ef_noStLA_v1.bin',precision='double',\
 dirxy=dir_results)
 
 # for High Resolution ASTE
