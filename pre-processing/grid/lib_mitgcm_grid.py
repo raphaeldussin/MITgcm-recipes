@@ -45,8 +45,10 @@ class mitgcm_grid():
                 else:
                         pass
 
-		Z = xr.DataArray(self.Z,coords=[np.arange(self.nz)],dims=['z'])
-		dz = xr.DataArray(self.delR,coords=[self.Z],dims=['depth'])
+		#Z = xr.DataArray(self.Z,coords=[np.arange(self.nz)],dims=['depth'])
+		#dz = xr.DataArray(self.delR,coords=[self.Z],dims=['depth'])
+		Z = xr.DataArray(self.Z,dims=['z'])
+		dz = xr.DataArray(self.delR,dims=['z'])
 		self.grid = xr.Dataset({'Z':Z,'dz':dz})
 
 		return None
