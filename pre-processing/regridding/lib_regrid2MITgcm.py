@@ -15,15 +15,16 @@ class Regrid2MITgcm():
 		self.spval = -9999.
 		return None
 
-	def regrid(self,dataset,list_variables,lonvarname,latvarname,method='bilinear',blend_missing=True,periodicity=0,target_point='center',mask_output=True):
+	def regrid(self,dataset,list_variables,lonvarname,latvarname,method='bilinear',blend_missing=True,periodicity=0,target_point='center',mask_output=True,periodic=True):
 		''' regrid the input xarray dataset
 		list_vars = list of strings
 		'''
+		# add periodic attr
 		# xESMF wants lon/lat to be the names of coords for interpolation
-		inputds = dataset.rename({lonvarname: 'lon', latvarname: 'lat'}, inplace=True)
+		inputds = dataset.rename({lonvarname: 'lon', latvarname: 'lat'})#, inplace=True)
 		# define an output dataset from grid with correct destination points
 		if target_point == 'center':
-			target_grid = self.model_grid.rename({'XC': 'lon', 'YC': 'lat'}, inplace=True)
+			target_grid = self.model_grid.rename({'XC': 'lon', 'YC': 'lat'})#, inplace=True)
 		else:
 			pass # TO DO
 
@@ -36,7 +37,7 @@ class Regrid2MITgcm():
 			#plt.figure()
 			#inputds[variable][0,0,:,:].plot() ; plt.show()
 
-		hremapped = self._perform_interpolation(inputds,target_grid,list_variables,method=method,blend_missing=blend_missing)
+		hremapped = self._perform_interpolation(inputds,target_grid,list_variables,method=method,blend_missing=blend_missing,periodic=periodic)
 
 		# vertical interpolation
 		outputds = self. _vertical_interpolation(inputds,hremapped,target_grid,list_variables)
@@ -91,13 +92,14 @@ class Regrid2MITgcm():
 		da3 = xr.DataArray(tmp3,dims=da1.dims)
 		return da3
 
-	def _perform_interpolation(self,input_dataset,target_grid,list_variables,method='bilinear',blend_missing=True):
+	def _perform_interpolation(self,input_dataset,target_grid,list_variables,method='bilinear',blend_missing=True,periodic=True):
 
 		# create interpolators
 		# not sure if I want to re-use the weights (source of potential mistakes)
-		regridder = xe.Regridder(input_dataset, target_grid, method) #,reuse_weights=True)
+		# add periodic option
+		regridder = xe.Regridder(input_dataset, target_grid, method, periodic=periodic) #,reuse_weights=True)
 		if blend_missing:
-			backup_regridder = xe.Regridder(input_dataset, target_grid, 'nearest_s2d') #,reuse_weights=True)
+			backup_regridder = xe.Regridder(input_dataset, target_grid, 'nearest_s2d',periodic=periodic) #,reuse_weights=True)
 
 		#hremapped = target_grid.copy()
 		hremapped = xr.Dataset()
