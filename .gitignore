@@ -1,0 +1,6 @@
+*.nc
+*.bin
+*.pyc
+*.so
+*.dSYM
+*.ipynb_checkpoints
