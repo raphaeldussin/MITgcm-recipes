@@ -2,6 +2,7 @@ import xarray as xr
 import numpy as np
 import sys
 import struct
+import extract_obc
 
 class create_obc():
 
@@ -69,7 +70,7 @@ class create_obc():
 		segment_length = np.array(segment_length) ; segment_value = np.array(segment_value)
 		ntotal = segment_length.sum() ; nsegments = len(segment_length)
 		boundary_vector_global = np.arange(ntotal)
-		boundary_on_off_global = 9999 * np.ones(ntotal)
+		boundary_on_off_global = 9999 * np.ones(ntotal,dtype='i')
 
 		seg_start=0
 		for k in np.arange(nsegments):
@@ -123,14 +124,24 @@ class create_obc():
 							output[:,:,ji] = tmp[variable].sel(x=ji,y=namelist_info['boundary_on_off_global'][ji]-1)
 			elif boundary in ['east','west']:
 				for kdata in np.arange(len(datasets_facets)):
+					#print('facet #', kdata)
 					tmp = datasets_facets[kdata].copy()
 					tmp['y'] = tmp['yglo']
-					for jj in tmp['y'].values:
-						if namelist_info['boundary_on_off_global'][jj] == 0: # no obc value
-							output[:,:,jj] = 0
-						else:
-							output[:,:,jj] = tmp[variable].sel(y=jj,x=namelist_info['boundary_on_off_global'][jj]-1)
-							pass
+					jstart = tmp['yglo'].values.min()
+					jend = tmp['yglo'].values.max() + 1
+					#print(jstart,jend)
+					#print(namelist_info['boundary_on_off_global'][jstart:jend])
+					#print(type(namelist_info['boundary_on_off_global'][jstart:jend]))
+					output[:,:,jstart:jend] = extract_obc.meridional_boundary_tz(tmp[variable].values,namelist_info['boundary_on_off_global'][jstart:jend])
+#					for jj in tmp['y'].values:
+#						print(jj)
+#						if namelist_info['boundary_on_off_global'][jj] == 0: # no obc value
+#							output[:,:,jj] = 0
+#							print(' set to zero')
+#						else:
+#							output[:,:,jj] = tmp[variable].sel(y=jj,x=namelist_info['boundary_on_off_global'][jj]-1)
+#							print(tmp[variable].dims)
+#							print('take data at',   namelist_info['boundary_on_off_global'][jj]-1)
 
 		return output
 
