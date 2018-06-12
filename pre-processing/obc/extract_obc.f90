@@ -1,0 +1,24 @@
+
+
+  SUBROUTINE meridional_boundary_tz(field,locations,nt,nz,ny,nx,obc)
+
+    IMPLICIT NONE
+
+    REAL(4),DIMENSION(nt,nz,ny,nx),INTENT(in) :: field
+    INTEGER,DIMENSION(ny),INTENT(in) :: locations
+    INTEGER,INTENT(in) :: nt,nz,ny,nx
+    REAL(4),DIMENSION(nt,nz,ny),INTENT(out) :: obc
+    INTEGER :: ji,jj,jk,jt
+
+
+    DO jj=1,ny
+       DO jk=1,nz
+          DO jt=1,nt
+             obc(jt,jk,jj) = field(jt,jk,jj,locations(jj))
+          ENDDO
+       ENDDO
+    ENDDO
+
+
+
+  END SUBROUTINE
