@@ -65,6 +65,8 @@ class Regrid2MITgcm():
 		# previous needs to be iterated on (t,z,) or (z,) or (t,)
 		ndims_loop = len(dataarray.dims) - 2
 
+		data_drowned = np.empty(dataarray.shape)
+
 		if ndims_loop == 2:
 			for k0 in np.arange(len(dataarray.coords[dataarray.dims[0]])):
 				for k1 in np.arange(len(dataarray.coords[dataarray.dims[1]])):
@@ -76,12 +78,13 @@ class Regrid2MITgcm():
 					tmpin[np.isnan(tmpin)] = self.spval
 					tmpout = mod_drown_sosie.mod_drown.drown(periodicity,tmpin.transpose(),masklevel.transpose(),\
 					                                         nb_inc=100,nb_smooth=20)
-					dataarray[k0,k1,:,:] = tmpout.transpose()
+					data_drowned[k0,k1,:,:] = tmpout.transpose()
 		else:
 			pass # TO DO
 
+		dataarray_out = xr.DataArray(data_drowned,coords=dataarray.coords,dims=dataarray.dims)
 
-		return dataarray
+		return dataarray_out
 
 	def _blend(self,da1,da2,missing):
 		tmp1 = da1.values
