@@ -52,24 +52,28 @@ class obc_regional_llc():
 
 		del data_compact
 
-		#plt.figure()
-		#plt.contourf(np.ma.masked_values(data_compact[0,:,:],0))
 		plt.figure()
 		plt.subplot(151)
 		if data_f1.shape[-1] != 0:
-			plt.contourf((np.ma.masked_values(data_f1[step,:],0)))
+			plt.contourf(self.mask_invalid_data(data_f1[step,:]))
 		plt.subplot(152)
 		if data_f2.shape[-1] != 0:
-			plt.contourf((np.ma.masked_values(data_f2[step,:],0)))
+			plt.contourf(self.mask_invalid_data(data_f2[step,:]))
 		plt.subplot(153)
 		if data_f3.shape[-1] != 0:
-			plt.contourf((np.ma.masked_values(data_f3[step,:],0)))
+			plt.contourf(self.mask_invalid_data(data_f3[step,:]))
 		plt.subplot(154)
 		if data_f4.shape[-1] != 0:
-			plt.contourf((np.ma.masked_values(data_f4[step,:],0)))
+			plt.contourf(self.mask_invalid_data(data_f4[step,:]))
 		plt.subplot(155)
 		if data_f5.shape[-1] != 0:
-			plt.contourf((np.ma.masked_values(data_f5[step,:],0)))
+			plt.contourf(self.mask_invalid_data(data_f5[step,:]))
 		plt.show()
 
-		return None #[data_f1,data_f2,data_f3,data_f4,data_f5]
+		return None
+
+	def mask_invalid_data(self,field):
+		mask = np.full(field.shape, False)
+		mask[np.where(field == 0)] = True
+		fieldout = np.ma.masked_array(data=field,mask=mask)
+		return fieldout
