@@ -61,7 +61,7 @@ interpolated3 = Regrid2ASTE3.regrid(glodap_cfc,variables2regrid,'longitude','lat
 blend_missing=False,periodicity=0,periodic=True)
 # For the Arctic, there's basically everything to fix
 # We use CFC average profiles from a cruise for the Arctic
-cfc_profiles_Carmack = xr.open_dataset(dir_cfc_carmack + 'CFC_profiles_Arctic_from_Carmack_depth_ASTE.nc')
+cfc_profiles_Carmack = xr.open_dataset(dir_cfc_carmack + 'CFC_profiles_Arctic_from_Carmack_depth_ASTE_corrected.nc')
 interpolated3['CFC11'][:] = cfc_profiles_Carmack['CFC11_arctic_profile'][:]
 interpolated3['CFC12'][:] = cfc_profiles_Carmack['CFC12_arctic_profile'][:]
 # We pad the sides with results from the other facets
