@@ -9,7 +9,7 @@ class create_ic():
 		'''  '''
 		return None
 
-	def create_ic_regional_llc(self,variable,datasets_facets,fileout,timestep=None,nx=270,clim=False):
+	def create_ic_regional_llc(self,variable,datasets_facets,fileout,timestep=None,nx=270,clim=False,precision='single'):
 		''' create the IC file from list of datasets '''
 		# in LLC configuration, we need to set nx
 		self.nx = nx
@@ -20,7 +20,7 @@ class create_ic():
 		self.output = self._create_output_array(clim=clim)
 		self._fill_array(datasets_facets,variable,timestep=timestep,clim=clim)
 
-		self._write_ic_to_binary(self.output,fileout,precision='single')
+		self._write_ic_to_binary(self.output,fileout,precision=precision)
 
 		return None
 
@@ -59,10 +59,23 @@ class create_ic():
 		self.nyend = self.nylist.cumsum()
 		if not clim:
 			if self.nt > 1:
-				self.output[0,:,:self.nyend[0],:]              = datasets_facets[0][variable][timestep,:,:,:].values
-				self.output[0,:,self.nyend[0]:self.nyend[1],:] = datasets_facets[1][variable][timestep,:,:,:].values
-				self.output[0,:,self.nyend[1]:self.nyend[2],:] = self._reorder_array(datasets_facets[2][variable][timestep,:,:,:].values)
-				self.output[0,:,self.nyend[2]:self.nyend[3],:] = self._reorder_array(datasets_facets[3][variable][timestep,:,:,:].values)
+				self.output[0,:,:self.nyend[0],:]              = \
+				datasets_facets[0][variable][timestep,:,:,:].values
+				self.output[0,:,self.nyend[0]:self.nyend[1],:] = \
+				datasets_facets[1][variable][timestep,:,:,:].values
+				self.output[0,:,self.nyend[1]:self.nyend[2],:] = \
+				self._reorder_array(datasets_facets[2][variable][timestep,:,:,:].values)
+				self.output[0,:,self.nyend[2]:self.nyend[3],:] = \
+				self._reorder_array(datasets_facets[3][variable][timestep,:,:,:].values)
+			if self.nt == 1:
+				self.output[0,:,:self.nyend[0],:]              = \
+				datasets_facets[0][variable][0,:,:,:].values
+				self.output[0,:,self.nyend[0]:self.nyend[1],:] = \
+				datasets_facets[1][variable][0,:,:,:].values
+				self.output[0,:,self.nyend[1]:self.nyend[2],:] = \
+				self._reorder_array(datasets_facets[2][variable][0,:,:,:].values)
+				self.output[0,:,self.nyend[2]:self.nyend[3],:] = \
+				self._reorder_array(datasets_facets[3][variable][0,:,:,:].values)
 		return None
 
 	def _reorder_array(self,datain):
