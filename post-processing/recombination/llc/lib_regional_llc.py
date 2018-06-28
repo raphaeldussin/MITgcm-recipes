@@ -129,25 +129,30 @@ class regional_llc():
 		plt.figure(figsize=[10,8])
 		ncontours=45 # number of contours could be moved to input dict_plt
 		norm = colors.Normalize(vmin=dict_plt['vmin'], vmax=dict_plt['vmax'])
+		if 'mult_fact' in dict_plt:
+			mult_fact = dict_plt['mult_fact']
+		else:
+			mult_fact = 1
+
 		if self.domain in ['ASTE','ASTE_hr']:
 			m = plt.axes(projection=cart.crs.Orthographic(central_longitude=-45, central_latitude=60))
 			# facet1
 			fieldplt1 = self.mask_invalid_data(Depth[0],FIELDs[0])
-			C = m.pcolormesh(XCs[0],YCs[0],fieldplt1,norm=norm,\
+			C = m.pcolormesh(XCs[0],YCs[0],mult_fact*fieldplt1,norm=norm,\
 			cmap=dict_plt['colorbar'],transform=cart.crs.PlateCarree())
 			plt.colorbar(C, norm=norm)
 			# facet2 is empty
 			# facet3
 			fieldplt3 = self.mask_invalid_data(Depth[2],FIELDs[2])
-			m.pcolormesh(XCs[2],YCs[2],fieldplt3,norm=norm,\
+			m.pcolormesh(XCs[2],YCs[2],mult_fact*fieldplt3,norm=norm,\
 			cmap=dict_plt['colorbar'],transform=cart.crs.PlateCarree())
 			# facet4
 			fieldplt4 = self.mask_invalid_data(Depth[3],FIELDs[3])
-			m.pcolormesh(XCs[3],YCs[3],fieldplt4,norm=norm,\
+			m.pcolormesh(XCs[3],YCs[3],mult_fact*fieldplt4,norm=norm,\
 			cmap=dict_plt['colorbar'],transform=cart.crs.PlateCarree())
 			# facet5
 			fieldplt5 = self.mask_invalid_data(Depth[4],FIELDs[4])
-			m.pcolormesh(XCs[4],YCs[4],fieldplt5,norm=norm,\
+			m.pcolormesh(XCs[4],YCs[4],mult_fact*fieldplt5,norm=norm,\
 			cmap=dict_plt['colorbar'],transform=cart.crs.PlateCarree())
 			m.coastlines()
 			m.add_feature(cart.feature.LAND, facecolor='0.75')
@@ -157,6 +162,8 @@ class regional_llc():
 		return None
 
 	def mask_invalid_data(self,depth,field):
-		field[np.where(depth == 0)] = 0
+		mask = np.full(depth.shape, False)
+		mask[np.where(depth == 0)] = True
 		fieldout = np.ma.masked_values(field,0)
+		fieldout = np.ma.masked_array(data=field,mask=mask)
 		return fieldout
