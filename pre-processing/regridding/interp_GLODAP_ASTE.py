@@ -22,6 +22,8 @@ blend_missing=True,periodicity=0,periodic=True)
 # nordic seas need a bit of cleaning up spurious values from extrapolation
 interpolated1['CFC11'][:,:,430:,160:] = interpolated1['CFC11'][:,:,430:,160] * interpolated1['lsm'][:,430:,160:]
 interpolated1['CFC12'][:,:,430:,160:] = interpolated1['CFC12'][:,:,430:,160] * interpolated1['lsm'][:,430:,160:]
+interpolated1['CFC11'] = xr.where(interpolated1['CFC11'] < 0,0,interpolated1['CFC11'])
+interpolated1['CFC12'] = xr.where(interpolated1['CFC12'] < 0,0,interpolated1['CFC12'])
 interpolated1.to_netcdf(dirout + 'GLODAP_CFC_ASTE_FACET1.nc')
 
 #--------------- FACET 4 ---------------------
@@ -34,6 +36,8 @@ interpolated4['CFC11'][:,:,:110,:20] = (interpolated4['CFC11'][:,:,110,:20] * \
                                         interpolated4['lsm'][:,:110,:20] ).transpose('time','z','y','x')
 interpolated4['CFC12'][:,:,:110,:20] = (interpolated4['CFC12'][:,:,110,:20] * \
                                         interpolated4['lsm'][:,:110,:20] ).transpose('time','z','y','x')
+interpolated4['CFC11'] = xr.where(interpolated4['CFC11'] < 0,0,interpolated4['CFC11'])
+interpolated4['CFC12'] = xr.where(interpolated4['CFC12'] < 0,0,interpolated4['CFC12'])
 interpolated4.to_netcdf(dirout + 'GLODAP_CFC_ASTE_FACET4.nc')
 
 #--------------- FACET 5 ---------------------
@@ -46,6 +50,8 @@ interpolated5['CFC11'][:,:,:105,:15] = interpolated5['CFC11'][:,:,111:116,1:5].m
 interpolated5['lsm'][:,:105,:15]
 interpolated5['CFC12'][:,:,:105,:15] = interpolated5['CFC12'][:,:,111:116,1:5].mean(dim=('x','y')) * \
 interpolated5['lsm'][:,:105,:15]
+interpolated5['CFC11'] = xr.where(interpolated5['CFC11'] < 0,0,interpolated5['CFC11'])
+interpolated5['CFC12'] = xr.where(interpolated5['CFC12'] < 0,0,interpolated5['CFC12'])
 interpolated5.to_netcdf(dirout + 'GLODAP_CFC_ASTE_FACET5.nc')
 
 #--------------- FACET 3 ---------------------
@@ -127,6 +133,8 @@ for n in np.arange(npasses):
 		smoothed = smoothing.gaussian_filter(tmp,4)
 		interpolated3['CFC12'][:,k,:,:] = smoothed * interpolated3['lsm'][k,:,:]
 
+interpolated3['CFC11'] = xr.where(interpolated3['CFC11'] < 0,0,interpolated3['CFC11'])
+interpolated3['CFC12'] = xr.where(interpolated3['CFC12'] < 0,0,interpolated3['CFC12'])
 # Always mask the end result
 interpolated3['CFC11'][:] = interpolated3['CFC11'][:] * interpolated3['lsm'][:]
 interpolated3['CFC12'][:] = interpolated3['CFC12'][:] * interpolated3['lsm'][:]
