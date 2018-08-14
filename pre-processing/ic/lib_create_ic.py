@@ -9,7 +9,8 @@ class create_ic():
 		'''  '''
 		return None
 
-	def create_ic_regional_llc(self,variable,datasets_facets,fileout,timestep=None,nx=270,clim=False,precision='single'):
+	def create_ic_regional_llc(self,variable,datasets_facets,fileout,timestep=None,nx=270,clim=False,\
+		background=None,precision='single'):
 		''' create the IC file from list of datasets '''
 		# in LLC configuration, we need to set nx
 		self.nx = nx
@@ -19,6 +20,9 @@ class create_ic():
 
 		self.output = self._create_output_array(clim=clim)
 		self._fill_array(datasets_facets,variable,timestep=timestep,clim=clim)
+
+		if background is not None:
+			self.output = self.output + background
 
 		self._write_ic_to_binary(self.output,fileout,precision=precision)
 

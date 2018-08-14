@@ -16,4 +16,4 @@ for facet in list_facets:
 aste_ic = create_ic()
 
 for var in list_bgc_variables:
-	aste_ic.create_ic_regional_llc(var,list_dataset,dir_ic_out + var + '_IC_glodap+carmack.bin',precision='single',timestep=0)
+	aste_ic.create_ic_regional_llc(var,list_dataset,dir_ic_out + var + '_IC_glodap+carmack+bckgrd.bin',precision='double',timestep=0,background=1e-15)

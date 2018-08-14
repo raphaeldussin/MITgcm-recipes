@@ -11,7 +11,7 @@ class create_obc():
 		self.namelist = namelist
 		return None
 
-	def create_obc_regional_llc(self,variable,boundary,datasets_facets,fileout):
+	def create_obc_regional_llc(self,variable,boundary,datasets_facets,fileout,precision='single',repeats=0):
 		''' create the OBC file for one boundary from list of datasets '''
 		# Parse data from data.obcs
 		namelist_info = self._parse_namelist(boundary)
@@ -32,7 +32,7 @@ class create_obc():
 
 		obc = self._extract_obc_from_datasets(variable,boundary,datasets_facets,namelist_info)
 
-		self._write_obc_to_binary(obc,fileout)
+		self._write_obc_to_binary(obc,fileout,precision=precision,repeats=repeats)
 
 		return None
 
@@ -145,15 +145,16 @@ class create_obc():
 
 		return output
 
-	def _write_obc_to_binary(self,obc,fileout,precision='single'):
+	def _write_obc_to_binary(self,obc,fileout,precision='single',repeats=0):
 		# write data to binary files
 		fid   = open(fileout, "wb")
 		flatdata = obc.values.flatten()
-		for kk in np.arange(len(flatdata)):
-			if precision == 'single':
-				tmp = struct.pack('>f',flatdata[kk])
-			elif precision == 'double':
-				tmp = struct.pack('>d',flatdata[kk])
-			fid.write(tmp)
+		for kt in np.arange(1+repeats):
+			for kk in np.arange(len(flatdata)):
+				if precision == 'single':
+					tmp = struct.pack('>f',flatdata[kk])
+				elif precision == 'double':
+					tmp = struct.pack('>d',flatdata[kk])
+				fid.write(tmp)
 		fid.close()
 		return None

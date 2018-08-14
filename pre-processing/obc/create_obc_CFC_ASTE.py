@@ -15,5 +15,5 @@ for facet in list_facets:
 aste_obc = create_obc('/Users/raphael/WORK/MITgcm_runs/ASTE-TEST01/input_BE2_dthetadr/data.obcs')
 
 for var in list_bgc_variables:
-	aste_obc.create_obc_regional_llc(var,'south',list_dataset,obc_dirout + var + '_obc_south_monthly_glodap+carmack.bin')
-	aste_obc.create_obc_regional_llc(var,'east',list_dataset,obc_dirout + var + '_obc_east_monthly_glodap+carmack.bin')
+	aste_obc.create_obc_regional_llc(var,'south',list_dataset,obc_dirout + var + '_obc_south_monthly_glodap+carmack.bin',precision='single',repeats=289)
+	aste_obc.create_obc_regional_llc(var,'east',list_dataset,obc_dirout + var + '_obc_east_monthly_glodap+carmack.bin',precision='single',repeats=289)
