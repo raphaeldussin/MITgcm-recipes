@@ -15,9 +15,9 @@ class Regrid2MITgcm():
 		self.spval = -9999.
 		return None
 
-	def regrid(self, dataset, list_variables, lonvarname, latvarname, method='bilinear',
+	def regrid(self, dataset, list_variables, lonvarname, latvarname, depthvarname, method='bilinear',
                    blend_missing=True, periodicity=0, target_point='center', mask_output=True,
-                   periodic=True, reuse_weights=False):
+                   periodic=True, reuse_weights=True, timevarname='time'):
 		''' regrid the input xarray dataset
 		list_vars = list of strings
 		'''
@@ -41,7 +41,8 @@ class Regrid2MITgcm():
                                                         reuse_weights=reuse_weights)
 
 		# vertical interpolation
-		outputds = self. _vertical_interpolation(inputds, hremapped, target_grid, list_variables)
+		outputds = self. _vertical_interpolation(inputds, hremapped, target_grid, list_variables,
+                                                         depthvarname, timevarname)
 
 		if mask_output:
 			outputds = self._mask_output(outputds, target_grid, list_variables)
@@ -72,15 +73,27 @@ class Regrid2MITgcm():
 
 					# extract the 2d fields for drown
 					tmpin = dataarray[k0,k1,:,:].values.squeeze()
-					masklevel = mask[k0,k1,::].squeeze()
+					masklevel = mask[k0,k1,:,:].squeeze()
 					# the NaNs in xarray don't make fortran happy
 					tmpin[np.isnan(tmpin)] = self.spval
 					tmpout = mod_drown_sosie.mod_drown.drown(periodicity,tmpin.transpose(),
                                                                                  masklevel.transpose(),\
 					                                         nb_inc=100,nb_smooth=20)
 					data_drowned[k0,k1,:,:] = tmpout.transpose()
+		elif ndims_loop == 1:
+			for k0 in np.arange(len(dataarray.coords[dataarray.dims[0]])):
+
+				# extract the 2d fields for drown
+				tmpin = dataarray[k0,:,:].values.squeeze()
+				masklevel = mask[k0,:,:].squeeze()
+				# the NaNs in xarray don't make fortran happy
+				tmpin[np.isnan(tmpin)] = self.spval
+				tmpout = mod_drown_sosie.mod_drown.drown(periodicity,tmpin.transpose(),
+                                                                         masklevel.transpose(),\
+    	 			                                         nb_inc=100,nb_smooth=20)
+				data_drowned[k0,:,:] = tmpout.transpose()
 		else:
-			pass # TO DO
+			data_drowned[:,:] = dataarray[:,:].values.squeeze()
 
 		dataarray_out = xr.DataArray(data_drowned, coords=dataarray.coords, dims=dataarray.dims)
 
@@ -120,55 +133,63 @@ class Regrid2MITgcm():
 		return hremapped
 
 
-	def _vertical_interpolation(self, inputds, hremapped, target_grid, list_variables):
+	def _vertical_interpolation(self, inputds, hremapped, target_grid, list_variables, 
+	                            depthvarname, timevarname):
 
 		outputds = target_grid.copy()
 		for variable in list_variables:
-			# needs failsafe for 2d data
-			ndims_loop = len(hremapped[variable].dims) - 3
-			# needs failsafe for 2d data
-			if len(hremapped[variable].dims) == 4:
-				vert_axis = 1
+			if not depthvarname in hremapped[variable].dims:
+				# 2d variable, nothing to do
+				# case time record, do without
 				nt = len(hremapped[variable].coords[hremapped[variable].dims[0]])
-				#nz = len(hremapped[variable].coords[hremapped[variable].dims[1]])
-				nz = len(target_grid['Z'].values) # hardcoded
-				ny = len(hremapped[variable].coords[hremapped[variable].dims[2]])
-				nx = len(hremapped[variable].coords[hremapped[variable].dims[3]])
+				ny = len(hremapped[variable].coords[hremapped[variable].dims[1]])
+				nx = len(hremapped[variable].coords[hremapped[variable].dims[2]])
 
-				dest_dims = (hremapped[variable].dims[0],'z', hremapped[variable].dims[2],
+				dest_dims = (hremapped[variable].dims[0],
+                                             hremapped[variable].dims[1],
+                                             hremapped[variable].dims[2])
+
+				remapped = xr.DataArray(np.zeros((nt,ny,nx)), dims=dest_dims)
+				remapped[:] = hremapped[variable].values[:]
+				outputds.update({variable:remapped})
+			else:
+				# 3d variable, with or without time axis
+				if not timevarname in hremapped[variable].dims:
+					hremapped = hremapped.expand_dims(timevarname, axis=0)
+				ndims_loop = len(hremapped[variable].dims) - 3
+
+				if ndims_loop == 1:
+					# variable has a time axis (can be 1 record)
+					nt = len(hremapped[variable].coords[hremapped[variable].dims[0]])
+					ny = len(hremapped[variable].coords[hremapped[variable].dims[2]])
+					nx = len(hremapped[variable].coords[hremapped[variable].dims[3]])
+
+				elif ndims_loop == 0:
+					# variable has no time axis, set N record to 1
+					nt = 1
+					ny = len(hremapped[variable].coords[hremapped[variable].dims[1]])
+					nx = len(hremapped[variable].coords[hremapped[variable].dims[2]])
+
+				dest_dims = (hremapped[variable].dims[0], 'z', 
+                                             hremapped[variable].dims[2],
                                              hremapped[variable].dims[3])
-			#elif len(hremapped[variable].dims) == 3:
-			#	vert_axis = 0
-			#	nt = 1
-			#	nz = len(hremapped[variable].coords[hremapped[variable].dims[0]])
-			#	ny = len(hremapped[variable].coords[hremapped[variable].dims[1]])
-			#	nx = len(hremapped[variable].coords[hremapped[variable].dims[2]])
+				# input depth vector
+				zold = inputds[depthvarname].values
+				# output depth vector
+				znew = target_grid['Z'].values # hardcoded
+				nz = len(znew)
 
-			# get data for src and dest depth
-			name_zold = hremapped[variable].dims[vert_axis]
+				remapped = xr.DataArray(np.zeros((nt,nz,ny,nx)), dims=dest_dims)
 
-			#print(name_zold)
-			zold = inputds[name_zold].values
-			#print(zold)
-			znew = target_grid['Z'].values # hardcoded
-
-			#print(outputds[variable].dims)
-			#print(ndims_loop,vert_axis)
-			#print(znew)
-			#data_regridded = xr.DataArray(
-
-			remapped = xr.DataArray(np.zeros((nt,nz,ny,nx)), dims=dest_dims)
-
-			if ndims_loop == 1:
-				for k0 in np.arange(len(hremapped[variable].coords[hremapped[variable].dims[0]])):
-					remapped[k0,:] = mod_akima_1d.mod_akima_1d.vertical_interpolation(zold,
+				if ndims_loop == 1:
+					for k0 in np.arange(nt):
+						remapped[k0,:] = \
+                                                mod_akima_1d.mod_akima_1d.vertical_interpolation(zold,
                                                          hremapped[variable][k0,:].values,znew)
-					#outputds[variable][k0,:] = mod_akima_1d.mod_akima_1d.vertical_
-                                        #interpolation(zold,hremapped[variable][k0,:].values,znew)
-					outputds.update({variable:remapped})
-			#elif ndims_loop == 0:
-			#	outputds[variable][:] = mod_akima_1d.mod_akima_1d.
-                        #vertical_interpolation(zold,hremapped[variable][:].values,znew)
+				elif ndims_loop == 0:
+					remapped[:] = mod_akima_1d.mod_akima_1d.vertical_interpolation(zold,
+                                                      hremapped[variable][:].values,znew)
+				outputds.update({variable:remapped})
 
 		return outputds
 
@@ -185,5 +206,8 @@ class Regrid2MITgcm():
 			elif ndims_loop == 1:
 				for k0 in np.arange(len(outputds[variable].coords[outputds[variable].dims[0]])):
 					outputds[variable][k0,:] = outputds[variable][k0,:] * target_grid.lsm[:]
+			elif ndims_loop <= 0:
+				# 2d variable / 3d mask
+				outputds[variable][:] = outputds[variable][:] * target_grid.lsm[0,:]
 
 		return outputds
