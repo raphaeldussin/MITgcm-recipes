@@ -16,7 +16,7 @@ class Regrid2MITgcm():
 		return None
 
 	def regrid(self, dataset, list_variables, lonvarname, latvarname, depthvarname, method='bilinear',
-                   blend_missing=True, periodicity=0, target_point='center', mask_output=True,
+                   blend_missing=True, periodicity=0, target_point='center', mask_output=True, drown=True,
                    periodic=True, reuse_weights=True, timevarname='time'):
 		''' regrid the input xarray dataset
 		list_vars = list of strings
@@ -34,7 +34,8 @@ class Regrid2MITgcm():
 			# build land sea mask
 			maskvar = self._mask_from_missing_value(inputds[variable])
 			# extrapolate onto land for coastal values
-			inputds[variable] = self._drown_field(inputds[variable], maskvar, periodicity=periodicity)
+			if drown:
+				inputds[variable] = self._drown_field(inputds[variable], maskvar, periodicity=periodicity)
 
 		hremapped = self._perform_interpolation(inputds, target_grid, list_variables, method=method,
                                                         blend_missing=blend_missing, periodic=periodic,

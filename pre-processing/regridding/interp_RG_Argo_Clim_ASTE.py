@@ -20,14 +20,14 @@ variables2regrid_anom = ['ARGO_TEMPERATURE_ANOMALY', 'ARGO_SALINITY_ANOMALY']
 aste_grid1 = xr.open_dataset(dirastegrd + 'ASTE_FACET1.nc')
 Regrid2ASTE1 = Regrid2MITgcm(aste_grid1)
 interpolated1 = Regrid2ASTE1.regrid(ds_TS_in, variables2regrid_mean, 'LONGITUDE', 'LATITUDE',
-                                    'PRESSURE', method='bilinear', blend_missing=False,
+                                    'PRESSURE', method='bilinear', blend_missing=False, drown=False,
                                     periodicity=0, periodic=True, timevarname='TIME')
 interpolated1.to_netcdf(dirout + 'RG_Argo_Clim_ASTE_FACET1.nc')
 
-interpolated1 = Regrid2ASTE1.regrid(ds_TS_in, variables2regrid_anom, 'LONGITUDE', 'LATITUDE',
-                                    'PRESSURE', method='bilinear', blend_missing=False,
+interpolated1a = Regrid2ASTE1.regrid(ds_TS_in, variables2regrid_anom, 'LONGITUDE', 'LATITUDE',
+                                    'PRESSURE', method='bilinear', blend_missing=False, drown=False,
                                     periodicity=0, periodic=True, timevarname='TIME')
-interpolated1.to_netcdf(dirout + 'RG_Argo_Anom_ASTE_FACET1.nc')
+interpolated1a.to_netcdf(dirout + 'RG_Argo_Anom_ASTE_FACET1.nc')
 
 #--------------- FACET 3 ---------------------
 # not enough data in Arctic, that'd be a waste a time
@@ -39,11 +39,11 @@ interpolated1.to_netcdf(dirout + 'RG_Argo_Anom_ASTE_FACET1.nc')
 aste_grid5 = xr.open_dataset(dirastegrd + 'ASTE_FACET5.nc')
 Regrid2ASTE5 = Regrid2MITgcm(aste_grid5)
 interpolated5 = Regrid2ASTE5.regrid(ds_TS_in, variables2regrid_mean, 'LONGITUDE', 'LATITUDE',
-                                    'PRESSURE', method='bilinear', blend_missing=False,
+                                    'PRESSURE', method='bilinear', blend_missing=False, drown=False,
                                     periodicity=0, periodic=True, timevarname='TIME')
 interpolated5.to_netcdf(dirout + 'RG_Argo_Clim_ASTE_FACET5.nc')
 
-interpolated5 = Regrid2ASTE5.regrid(ds_TS_in, variables2regrid_anom, 'LONGITUDE', 'LATITUDE',
-                                    'PRESSURE', method='bilinear', blend_missing=False,
+interpolated5a = Regrid2ASTE5.regrid(ds_TS_in, variables2regrid_anom, 'LONGITUDE', 'LATITUDE',
+                                    'PRESSURE', method='bilinear', blend_missing=False, drown=False,
                                     periodicity=0, periodic=True, timevarname='TIME')
-interpolated5.to_netcdf(dirout + 'RG_Argo_Anom_ASTE_FACET5.nc')
+interpolated5a.to_netcdf(dirout + 'RG_Argo_Anom_ASTE_FACET5.nc')
