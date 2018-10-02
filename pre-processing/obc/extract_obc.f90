@@ -8,13 +8,18 @@
     INTEGER,DIMENSION(ny),INTENT(in) :: locations
     INTEGER,INTENT(in) :: nt,nz,ny,nx
     REAL(4),DIMENSION(nt,nz,ny),INTENT(out) :: obc
-    INTEGER :: ji,jj,jk,jt
+    INTEGER :: jj,jk,jt
 
 
     DO jj=1,ny
        DO jk=1,nz
           DO jt=1,nt
-             obc(jt,jk,jj) = field(jt,jk,jj,locations(jj))
+             IF (locations(jj) == 0) THEN
+                ! land
+                obc(jt,jk,jj) = 0
+             ELSE
+                obc(jt,jk,jj) = field(jt,jk,jj,locations(jj))
+             ENDIF
           ENDDO
        ENDDO
     ENDDO

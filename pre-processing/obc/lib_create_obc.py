@@ -78,8 +78,9 @@ class create_obc():
 			boundary_on_off_global[seg_start:seg_end] = segment_value[k]
 			seg_start = seg_end
 
-		namelist_info = {'boundary_vector_global':boundary_vector_global,'boundary_on_off_global':boundary_on_off_global,\
-		'ntotal':ntotal}
+		namelist_info = {'boundary_vector_global': boundary_vector_global,
+                                 'boundary_on_off_global': boundary_on_off_global,
+		                 'ntotal':ntotal}
 		return namelist_info
 
 	def _verif_size_combined_facets(self,boundary,datasets_facets):
@@ -111,7 +112,8 @@ class create_obc():
 		if ndims == 2:
 			n0 = datasets_facets[0][variable][:].shape[0] # ugly
 			n1 = datasets_facets[0][variable][:].shape[1]
-			output = xr.DataArray(9999 * np.ones((n0,n1,namelist_info['ntotal'])),dims=('time','z','obc'))
+			output = xr.DataArray(9999 * np.ones((n0,n1,namelist_info['ntotal'])),
+                                              dims=('time','z','obc'))
 
 			if boundary in ['north','south']:
 				for kdata in np.arange(len(datasets_facets)):
@@ -121,7 +123,8 @@ class create_obc():
 						if namelist_info['boundary_on_off_global'][ji] == 0: # no obc value
 							output[:,:,ji] = 0
 						else:
-							output[:,:,ji] = tmp[variable].sel(x=ji,y=namelist_info['boundary_on_off_global'][ji]-1)
+							output[:,:,ji] = tmp[variable].sel(x=ji, \
+                                                        y=namelist_info['boundary_on_off_global'][ji]-1)
 			elif boundary in ['east','west']:
 				for kdata in np.arange(len(datasets_facets)):
 					#print('facet #', kdata)
@@ -132,17 +135,22 @@ class create_obc():
 					#print(jstart,jend)
 					#print(namelist_info['boundary_on_off_global'][jstart:jend])
 					#print(type(namelist_info['boundary_on_off_global'][jstart:jend]))
-					output[:,:,jstart:jend] = extract_obc.meridional_boundary_tz(tmp[variable].values,namelist_info['boundary_on_off_global'][jstart:jend])
+					#print(output.shape)
+					#print(tmp[variable].values.shape)
+					output[:,:,jstart:jend] = extract_obc.meridional_boundary_tz(\
+                                        tmp[variable].values,namelist_info['boundary_on_off_global'][jstart:jend])
 #					for jj in tmp['y'].values:
 #						print(jj)
 #						if namelist_info['boundary_on_off_global'][jj] == 0: # no obc value
 #							output[:,:,jj] = 0
 #							print(' set to zero')
 #						else:
-#							output[:,:,jj] = tmp[variable].sel(y=jj,x=namelist_info['boundary_on_off_global'][jj]-1)
+#							output[:,:,jj] = tmp[variable].sel(y=jj,\
+#                                                       x=namelist_info['boundary_on_off_global'][jj]-1)
 #							print(tmp[variable].dims)
 #							print('take data at',   namelist_info['boundary_on_off_global'][jj]-1)
 
+		#output.to_netcdf('debug.nc')
 		return output
 
 	def _write_obc_to_binary(self,obc,fileout,precision='single',repeats=0):
