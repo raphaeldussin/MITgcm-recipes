@@ -16,6 +16,6 @@ aste_obc = create_obc('/home/rdussin/MITgcm_runs/ASTE-Phy-REF01/input_BE2_dtheta
 
 for var in list_bgc_variables:
 	aste_obc.create_obc_regional_llc(var,'south',list_dataset,obc_dirout + \
-                                         var + '_obc_south_annual_GLODAPv2.bin')
+                                         var + '_obc_south_annual_GLODAPv2.bin',repeats=289)
 	aste_obc.create_obc_regional_llc(var,'east',list_dataset,obc_dirout + \
-                                         var + '_obc_east_annual_GLODAPv2.bin')
+                                         var + '_obc_east_annual_GLODAPv2.bin',repeats=289)

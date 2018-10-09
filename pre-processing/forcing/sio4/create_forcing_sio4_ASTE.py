@@ -19,7 +19,7 @@ aste_iron = create_ic()
 
 for var in list_bgc_variables:
 	for kt in np.arange(12):
-		aste_iron.create_ic_regional_llc(var,list_dataset,'SiO4_month' + str(kt+1).zfill(2),precision='single',timestep=kt,level=0)
+		aste_iron.create_ic_regional_llc(var,list_dataset,'SiO4_month' + str(kt+1).zfill(2),precision='double',timestep=kt,level=0)
 
 # concat all the files
 fileout = dir_ic_out + 'sillev_raf.bin'
