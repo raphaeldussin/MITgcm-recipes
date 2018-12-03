@@ -49,3 +49,12 @@ def avg2d_llc(DataArray, darea=None):
           (darea * mask).sum(axis=3).sum(axis=2).sum(axis=1) 
 
     return out
+
+#----- hovmullers ----
+
+def hov_time_depth_llc(DataArray):
+    ''' return the hovmuller of llc data with time vs depth dims '''
+    wa = (DataArray * DataArray['rA']).where(DataArray !=0).sum(dim=['face','j','i'])
+    norm = (DataArray['rA']).where(DataArray !=0).sum(dim=['face','j','i'])
+    out = wa / norm
+    return out

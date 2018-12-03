@@ -3,7 +3,7 @@ import matplotlib.pylab as _plt
 import numpy as _np
 import cartopy as _cart
 from matplotlib import colors as _colors
-from gridfill import fill as _fill
+#from gridfill import fill as _fill # py2.7 !
 
 from .data_organization import *
 
@@ -35,8 +35,10 @@ def plot_ASTE(dataarray, dict_plt):
         lon = dataarray['XC'].sel(face=f).values
         lat = dataarray['YC'].sel(face=f).values
         # fill missing values in lon/lat arrays
-        lonplt, converged = _fill(_np.ma.masked_values(lon,0), 1, 0, **kw)
-        latplt, converged = _fill(_np.ma.masked_values(lat,0), 1, 0, **kw)
+        #lonplt, converged = _fill(_np.ma.masked_values(lon,0), 1, 0, **kw)
+        #latplt, converged = _fill(_np.ma.masked_values(lat,0), 1, 0, **kw)
+        lonplt = lon
+        latplt = lat
         # mask data where needed
         data = dataarray.sel(face=f).values
         depth= dataarray['Depth'].sel(face=f).values
@@ -166,4 +168,52 @@ def plot_ASTE_with_grids(dataarray, dict_plt, dirgrid, facet1_grid='ASTE_FACET1.
 #                       da_ARC[varname].where(da_ARC[varname] != 0), vmin=vmin, vmax=vmax, cmap=cmap,\
 #                       transform=_cart.crs.PlateCarree())
 #
+    return fig
+
+def plot_ASTE_pyresample(dataarray, dict_plt, hres=0.33, proj=_cart.crs.PlateCarree()):
+    ''' plot ASTE after regridding with pyresample '''
+    import pyresample as _pyresample
+
+    # input grid
+    lons_in = dataarray['XC'].values.ravel()
+    lats_in = dataarray['YC'].values.ravel()
+
+    grid_src = _pyresample.geometry.SwathDefinition(lons=lons_in, lats=lats_in)
+
+    # output grid
+    lon = _np.arange(-180, 180, hres) + hres/2
+    lat = _np.arange(-90, 90, hres) + hres/2
+    lon_out, lat_out = _np.meshgrid(lon, lat)
+
+    grid_target = _pyresample.geometry.GridDefinition(lons=lon_out,
+                                                      lats=lat_out)
+
+    data = _pyresample.kd_tree.resample_nearest(grid_src, dataarray.values, 
+                                                grid_target,
+                                                radius_of_influence=100000,
+                                                fill_value=0)
+
+    data = _np.ma.masked_values(data,0.)
+
+    # explicit list of keys
+    figsize  = dict_plt['figsize']
+    vmin     = dict_plt['vmin']
+    vmax     = dict_plt['vmax']
+    contours = dict_plt['contours']
+    cmap     = dict_plt['cmap']
+    cbarsize = dict_plt['cbarsize']
+    title    = dict_plt['title']
+
+    fig = _plt.figure(figsize=figsize)
+    m = _plt.axes(projection=proj)
+    gl = m.gridlines(draw_labels=False)
+    norm = _colors.Normalize(vmin=vmin, vmax=vmax)
+
+    # pcolormesh not working
+    C = m.contourf(lon_out, lat_out,
+                     data, contours, norm=norm, cmap=cmap,\
+                     transform=_cart.crs.PlateCarree())
+
+    _plt.colorbar(C, shrink=cbarsize)
+    m.add_feature(_cart.feature.LAND, facecolor='0.5')
     return fig
