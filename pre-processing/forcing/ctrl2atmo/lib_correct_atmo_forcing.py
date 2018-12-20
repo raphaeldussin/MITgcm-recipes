@@ -3,6 +3,7 @@ import xmitgcm
 import pyresample as _pyresample
 import numpy as np
 import pandas as pd
+import struct
 
 def read_forcing_grid(filein, lonvar='lon', latvar='lat'):
     ''' read coordinates of forcing grid '''
@@ -12,7 +13,8 @@ def read_forcing_grid(filein, lonvar='lon', latvar='lat'):
 
     return lon, lat
 
-def read_forcing_from_binary(filein, varname, lon, lat, dateref, startdate, 
+def read_forcing_from_binary(filein, varname, lon, lat, 
+                             dateref='1900-1-1', startdate='1980-1-1',
                              freq='3H', precision='single'):
     ''' read forcing file from binary and return dataset '''
 
@@ -50,7 +52,8 @@ def read_ctrl_file(varname, optim_cycle, ntimes, grid_dir):
 
     return data, grid
 
-def regrid_to_forcing(lon_atm, lat_atm, grid_ctrl, data_ctrl):
+def regrid_to_forcing(lon_atm, lat_atm, grid_ctrl, data_ctrl,
+                      varname, refdate='2002-01-01', freq='14D'):
     ''' regrid from model grid to atmospheric grid '''
 
     nt = data_ctrl.shape[0]
@@ -90,7 +93,13 @@ def regrid_to_forcing(lon_atm, lat_atm, grid_ctrl, data_ctrl):
         # roll back from -180/180 to 0/360
         data[kt,:,:] = np.roll(data_interp, -ind_greenwich)
 
-    return data
+    ds = xr.Dataset({varname: (['time', 'lat', 'lon'], data)},
+                     coords={'lon': (['lon'], lon_atm),
+                             'lat': (['lat'], lat_atm),
+                             'time': pd.date_range(refdate, freq='14D', periods=419),
+                             'reference_time': pd.Timestamp(refdate)})
+
+    return ds
 
 def resample_ctrl_to_forcing_dates(ds_ctrl, year, freq='3H'):
     ''' resample the ctrl to the actual forcing date/time '''
@@ -101,7 +110,7 @@ def resample_ctrl_to_forcing_dates(ds_ctrl, year, freq='3H'):
     # 13 days after Dec 12, rounding up to middle of month
 
     startdate=str(year-1) + '-12-15'
-    enddayr=str(year+1) + '-01-15'
+    enddate=str(year+1) + '-01-15'
 
     ds_out=ds_ctrl.sel(time=slice(startdate, enddate)).resample(time=freq).interpolate('linear')
 
@@ -111,4 +120,21 @@ def add_correction(ds_forcing, ds_ctrl_resampled, mult_fact):
     ''' add the resampled correction onto forcing field '''
     # xarray is going to broadcast ds_ctrl_resampled onto the forcing time
     ds_out = ds_forcing + mult_fact * ds_ctrl_resampled
-    return out
+    return ds_out
+
+def write_to_binary(ds, variable, fileout, precision='single'):
+    ''' write variable from dataset ds to fileout with precision '''
+    # write data to binary files
+    fid   = open(fileout, "wb")
+    flatdata = ds[variable].values.flatten()
+    print(len(flatdata))
+    if precision == 'single':
+        for kk in np.arange(len(flatdata)):
+            tmp = struct.pack('>f',flatdata[kk])
+            fid.write(tmp)
+    elif precision == 'double':
+        for kk in np.arange(len(flatdata)):
+           tmp = struct.pack('>d',flatdata[kk])
+           fid.write(tmp)
+    fid.close()
+    return None
