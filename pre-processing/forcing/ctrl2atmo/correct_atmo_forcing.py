@@ -14,7 +14,7 @@ data = regrid_to_forcing(lon_atm, lat_atm, grid_ctrl, data_ctrl)
 ds = xr.Dataset({'temperature': (['time', 'lat', 'lon'], data)},
                  coords={'lon': (['lon'], lon_atm),
                          'lat': (['lat'], lat_atm),
-                         'time': pd.date_range('2002-01-01', periods=419),
+                         'time': pd.date_range('2002-01-01', freq='14D', periods=419),
                          'reference_time': pd.Timestamp('2002-01-01')})
 
 ds.to_netcdf('test_spechum.nc')
