@@ -3,7 +3,7 @@ import xmitgcm
 import pyresample as _pyresample
 import numpy as np
 import pandas as pd
-import struct
+import struct, sys
 
 def read_forcing_grid(filein, lonvar='lon', latvar='lat'):
     ''' read coordinates of forcing grid '''
@@ -48,6 +48,7 @@ def read_ctrl_file(varname, optim_cycle, ntimes, grid_dir):
     grid = xmitgcm.open_mdsdataset(grid_dir, prefix=['XC','YC'], geometry='llc', 
                                    extra_metadata=astemd, nx=astemd['nx'])
 
+    print('reading', tmp[list(tmp.keys())[0]])
     data = xr.DataArray(tmp[list(tmp.keys())[0]], dims=['time', 'face', 'j', 'i'])
 
     return data, grid
@@ -127,14 +128,16 @@ def write_to_binary(ds, variable, fileout, precision='single'):
     # write data to binary files
     fid   = open(fileout, "wb")
     flatdata = ds[variable].values.flatten()
-    print(len(flatdata))
     if precision == 'single':
-        for kk in np.arange(len(flatdata)):
-            tmp = struct.pack('>f',flatdata[kk])
-            fid.write(tmp)
+        if sys.byteorder == 'little':
+            tmp = flatdata.astype(np.dtype('f')).byteswap(True).tobytes()
+        else:
+            tmp = flatdata.astype(np.dtype('f')).tobytes()
+        fid.write(tmp)
     elif precision == 'double':
-        for kk in np.arange(len(flatdata)):
-           tmp = struct.pack('>d',flatdata[kk])
-           fid.write(tmp)
+        if sys.byteorder == 'little':
+            tmp = flatdata.astype(np.dtype('d')).byteswap(True).tobytes()
+        else:
+            tmp = flatdata.astype(np.dtype('d')).tobytes()
     fid.close()
     return None
