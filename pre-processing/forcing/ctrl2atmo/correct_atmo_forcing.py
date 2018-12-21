@@ -8,7 +8,7 @@ outdir='/local/data/artemis/workspace/rdussin/ASTE/JRA55/jra55/corrected/'
 
 lon_atm, lat_atm = read_forcing_grid(jragrid, lonvar='longitude', latvar='latitude')
 
-firstyear=2017
+firstyear=2002
 lastyear=2017
 dateref='2002-01-01 0:00:00'
 nrecsxx=419   # number of time records from xx_var.effective, infered from file size / 1350 / 270 / 4
@@ -24,8 +24,7 @@ precip = {'ctrl_name': 'xx_precip.effective', 'jra_name': 'jra55_rain', 'ncname'
 uwind = {'ctrl_name': 'xx_uwind.effective', 'jra_name': 'jra55_u10m', 'ncname': 'u10', 'sf': 1, 'freq':'3H'}
 vwind = {'ctrl_name': 'xx_vwind.effective', 'jra_name': 'jra55_v10m', 'ncname': 'v10', 'sf': 1, 'freq':'3H'}
 
-#vars_to_correct = [temp, humi, radlw, radsw, precip, uwind, vwind]
-vars_to_correct = [temp, radsw]
+vars_to_correct = [temp, humi, radlw, radsw, precip, uwind, vwind]
 
 for var in vars_to_correct:
     print('working on variable', var)
