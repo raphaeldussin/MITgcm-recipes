@@ -3,6 +3,8 @@ import matplotlib.pylab as _plt
 import numpy as _np
 import cartopy as _cart
 from matplotlib import colors as _colors
+from matplotlib import cm
+import xarray as _xr
 #from gridfill import fill as _fill # py2.7 !
 
 from .data_organization import *
@@ -170,7 +172,7 @@ def plot_ASTE_with_grids(dataarray, dict_plt, dirgrid, facet1_grid='ASTE_FACET1.
 #
     return fig
 
-def plot_ASTE_pyresample(dataarray, dict_plt, hres=0.33, proj=_cart.crs.PlateCarree()):
+def plot_ASTE_pyresample(dataarray, dict_plt, hres=0.33, proj=_cart.crs.PlateCarree(), etopofile=None):
     ''' plot ASTE after regridding with pyresample '''
     import pyresample as _pyresample
 
@@ -195,6 +197,14 @@ def plot_ASTE_pyresample(dataarray, dict_plt, hres=0.33, proj=_cart.crs.PlateCar
 
     data = _np.ma.masked_values(data,0.)
 
+    if etopofile is not None:
+        bathy = _xr.open_dataset(etopofile)
+        topolon = bathy['topo_lon'].values
+        topolat = bathy['topo_lat'].values
+        topo = bathy['topo'].values
+        topo = _np.ma.masked_less(topo,0)
+        print(topo.min(), topo.max())
+
     # explicit list of keys
     figsize  = dict_plt['figsize']
     vmin     = dict_plt['vmin']
@@ -212,8 +222,14 @@ def plot_ASTE_pyresample(dataarray, dict_plt, hres=0.33, proj=_cart.crs.PlateCar
     # pcolormesh not working
     C = m.contourf(lon_out, lat_out,
                      data, contours, norm=norm, cmap=cmap,\
-                     transform=_cart.crs.PlateCarree())
+                     transform=_cart.crs.PlateCarree(), extend='both')
 
     _plt.colorbar(C, shrink=cbarsize)
-    m.add_feature(_cart.feature.LAND, facecolor='0.5')
+    #m.set_extent([-180, 180, -20, 90], _cart.crs.PlateCarree()) # doesn't work
+    if etopofile is not None:
+        C = m.pcolormesh(topolon, topolat,
+                       topo, cmap=cm.terrain,\
+                       transform=_cart.crs.PlateCarree(), zorder=2)
+    else:
+        m.add_feature(_cart.feature.LAND, facecolor='0.5')
     return fig
