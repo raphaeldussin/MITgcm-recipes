@@ -28,6 +28,6 @@ print('min/max', data.min() , data.max() )
 
 da = xr.DataArray(data, coords=[time, lat, lon], dims=['time', 'lat', 'lon'])
 ds = xr.Dataset({var: (['time', 'lat', 'lon'],  da)},
-                 coords={'lon': (['x', 'y'], lon),
-                         'lat': (['x', 'y'], lat)})
+                 coords={'lon': (['lon'], lon),
+                         'lat': (['lat'], lat)})
 ds.to_netcdf(fileout)
