@@ -153,26 +153,14 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
     # rename mitgcm grid variables
     if point == 'T':
         target_grid = mitgcm_grid.rename({'XC': 'lon', 'YC': 'lat'})
-        xdim='i' ; ydim='j'
     elif point == 'U':
         target_grid = mitgcm_grid.rename({'XG': 'lon', 'YC': 'lat'})
-        xdim='i_g' ; ydim='j'
     elif point == 'V':
         target_grid = mitgcm_grid.rename({'XC': 'lon', 'YG': 'lat'})
-        xdim='i' ; ydim='j_g'
 
 
-    iface = target_grid['lon'].get_axis_num('face')
-    nfaces = target_grid['lon'].shape[iface]
-
-    ix = target_grid['lon'].get_axis_num(xdim)
-    nx = target_grid['lon'].shape[ix]
-
-    iy = target_grid['lon'].get_axis_num(ydim)
-    ny = target_grid['lon'].shape[iy]
-
-    x = xr.DataArray(np.arange(nx), dims=[xdim])
-    y = xr.DataArray(np.arange(ny), dims=[ydim])
+    coords = create_coords_regridded(mitgcm_grid, point=point)
+    nfaces = len(coords['face'].values)
 
     # create  a dictionary of interpolators
     regridders = {}
@@ -196,8 +184,6 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
 
 
     hremapped = xr.Dataset()
-    hremapped.update({'XC':target_grid['lon']})
-    hremapped.update({'YC':target_grid['lat']})
 
     for variable in list_variables:
         for face in range(nfaces):
@@ -211,19 +197,17 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
                 dataface = blend(dataface, backup_dataface, missing=0)
 
             # rewrite the coordinates
-            dataface.rename({'lon': xdim})
-            dataface.rename({'lat': ydim})
-            dataface.coords[xdim] = x
-            dataface.coords[ydim] = y
-            dataface.drop(['lon', 'lat'])
+            dataface = rewrite_coords_regridded(dataface, coords, point=point)
 
-            print(dataface)
             #stack/concatenate
             if face == 0:
                 data_all = dataface.expand_dims(dim='face')
             else:
                 data_all = xr.concat([data_all, dataface], dim='face')
 
+        # once concat has happened, add faces
+        data_all.coords['face'] = coords['face']
+        # add to dataset
         hremapped.update({variable: data_all})
 
     return hremapped
@@ -302,8 +286,61 @@ def logic_mask_from_missing_value(array, spval=None):
     return mask
 
 
+def create_coords_regridded(mitgcm_grid, point='T'):
+    ''' generate new set of coords in the xmitgcm style
+    for regridded array '''
+
+    xdim, ydim = dims_of_pointtype(point)
+    lon='XC' # mitgcm grid is symetric, so it doesn't matter here
+
+    # create horizontal coordinates "i,j"
+    ix = mitgcm_grid[lon].get_axis_num(xdim)
+    nx = mitgcm_grid[lon].shape[ix]
+
+    iy = mitgcm_grid[lon].get_axis_num(ydim)
+    ny = mitgcm_grid[lon].shape[iy]
+
+    x = xr.DataArray(np.arange(nx), dims=[xdim])
+    y = xr.DataArray(np.arange(ny), dims=[ydim])
+
+    # create face coordinate 
+    iface = mitgcm_grid[lon].get_axis_num('face')
+    nfaces = mitgcm_grid[lon].shape[iface]
+    
+    faces = xr.DataArray(np.arange(nfaces), dims=['face'])
+
+    coords = {xdim: x, ydim: y, 'face': faces}
+
+    return coords
 
 
+def rewrite_coords_regridded(da, coords, point='T'):
+    ''' rewrite the dataarray with xmitgcm coords '''
 
+    xdim, ydim = dims_of_pointtype(point)
+
+    # rewrite the coordinates
+    da.rename({'lon': xdim})
+    da.rename({'lat': ydim})
+    da.coords[xdim] = coords[xdim]
+    da.coords[ydim] = coords[ydim]
+    da = da.drop('lon')
+    da = da.drop('lat')
+
+    return da
+
+
+def dims_of_pointtype(point):
+    ''' returns the dims pair for each point type (e.g. T, U, V) '''
+
+    if point == 'T':
+        xdim='i' ; ydim='j'
+    elif point == 'U':
+        xdim='i_g' ; ydim='j'
+    elif point == 'V':
+        xdim='i' ; ydim='j_g'
+    else:
+        raise ValueError('no such point, correct values are T, U and V')
+    return xdim, ydim
 
 
