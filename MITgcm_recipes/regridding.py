@@ -7,6 +7,10 @@ import matplotlib.pylab as plt
 import scipy.interpolate as spint
 from MITgcm_recipes import akima1d
 
+#--------------------
+# DROWN
+#--------------------
+
 def drown_field(dataset, variable, dims_drown=['lat', 'lon'], mask=None, periodicity=0):
 
     dataarray = dataset[variable]
@@ -112,7 +116,6 @@ def drown_2d_field_sosie(array, mask=None, spval=None, periodicity=0, nb_inc=200
     return out
 
 
-
 def drown_2d_field_gridfill(array, mask=None, spval=None, periodic=True, itermax=100, relax=.6):
     """ fill land values from array, with optional mask, periodicity, ... """
 
@@ -139,27 +142,9 @@ def drown_2d_field_gridfill(array, mask=None, spval=None, periodic=True, itermax
     return drowned
 
 
-def int_mask_from_missing_value(array, spval=None):
-    ''' create binary 1/0 mask for masked values in array '''
-
-    mask = np.ones(array.shape, dtype=np.int)
-    if spval is None: # nan by default
-        mask[np.isnan(array)] = 0
-    else:
-        mask[np.where(array == spval)] = 0
-
-    return mask
-
-
-def logic_mask_from_missing_value(array, spval=None):
-    ''' create True/False mask for masked values in array '''
-
-    if spval is None: # nan by default
-        mask = np.isnan(array)
-    else:
-        mask = np.where(array == spval)
-
-    return mask
+#--------------------
+# REGRID
+#--------------------
 
 def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
                         lonname='lon', latname='lat', method='bilinear',
@@ -232,6 +217,7 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
             dataface.coords[ydim] = y
             dataface.drop(['lon', 'lat'])
 
+            print(dataface)
             #stack/concatenate
             if face == 0:
                 data_all = dataface.expand_dims(dim='face')
@@ -240,11 +226,16 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
 
         hremapped.update({variable: data_all})
 
-        #hremapped.rename({'lon': 'XC', 'lat': 'YC'}, inplace=True)
     return hremapped
 
 
+#--------------------
+# helping functions
+#--------------------
+
 def blend(da1, da2, missing=None):
+    ''' blend dataarray1 with values from dataarray2 where
+    dataarray1 has missing value '''
     tmp1 = da1.values
     tmp2 = da2.values
     mask = np.ones(tmp1.shape)
@@ -256,6 +247,7 @@ def blend(da1, da2, missing=None):
 
 
 def get_bounds(target_grid, face):
+    ''' returns lon/lat min/max for llc face '''
     lon = get_true_coords(target_grid, 'lon', face)
     lat = get_true_coords(target_grid, 'lat', face)
     lonmin = lon.min() -1
@@ -266,12 +258,14 @@ def get_bounds(target_grid, face):
 
 
 def get_true_coords(grid, coord, face):
+    ''' returns lon/lat while filtering zeros = missing value'''
     tmp = grid.sel(face=face)[coord].values
     out = np.ma.masked_values(tmp,0)
     return out
 
 
 def restrict_periodicity(periodicity, full, subset, lonname='lon'):
+    ''' decide if original periodicity has been broken by subsetting array '''
     indxlonfull = full[lonname].get_axis_num(lonname)
     indxlonsubset = subset[lonname].get_axis_num(lonname)
     sizelonfull = full[lonname].shape[indxlonfull]
@@ -284,6 +278,28 @@ def restrict_periodicity(periodicity, full, subset, lonname='lon'):
         periodicity=False
     return periodicity
 
+
+def int_mask_from_missing_value(array, spval=None):
+    ''' create binary 1/0 mask for masked values in array '''
+
+    mask = np.ones(array.shape, dtype=np.int)
+    if spval is None: # nan by default
+        mask[np.isnan(array)] = 0
+    else:
+        mask[np.where(array == spval)] = 0
+
+    return mask
+
+
+def logic_mask_from_missing_value(array, spval=None):
+    ''' create True/False mask for masked values in array '''
+
+    if spval is None: # nan by default
+        mask = np.isnan(array)
+    else:
+        mask = np.where(array == spval)
+
+    return mask
 
 
 
