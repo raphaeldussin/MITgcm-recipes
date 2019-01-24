@@ -155,8 +155,11 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
         target_grid = mitgcm_grid.rename({'XC': 'lon', 'YC': 'lat'})
     elif point == 'U':
         target_grid = mitgcm_grid.rename({'XG': 'lon', 'YC': 'lat'})
+        target_grid['lon'] = target_grid['lon'].rename({'j_g':'j'})
     elif point == 'V':
         target_grid = mitgcm_grid.rename({'XC': 'lon', 'YG': 'lat'})
+        target_grid['lon'] = target_grid['lon'].rename({'j':'j_g'}) # needed by xesmf to get dim right
+        target_grid['lat'] = target_grid['lat'].rename({'i_g':'i'})
 
 
     coords = create_coords_regridded(mitgcm_grid, point=point)
@@ -291,14 +294,14 @@ def create_coords_regridded(mitgcm_grid, point='T'):
     for regridded array '''
 
     xdim, ydim = dims_of_pointtype(point)
-    lon='XC' # mitgcm grid is symetric, so it doesn't matter here
+    lon, lat = geo_of_pointtype(point)
 
     # create horizontal coordinates "i,j"
     ix = mitgcm_grid[lon].get_axis_num(xdim)
     nx = mitgcm_grid[lon].shape[ix]
 
-    iy = mitgcm_grid[lon].get_axis_num(ydim)
-    ny = mitgcm_grid[lon].shape[iy]
+    iy = mitgcm_grid[lat].get_axis_num(ydim)
+    ny = mitgcm_grid[lat].shape[iy]
 
     x = xr.DataArray(np.arange(nx), dims=[xdim])
     y = xr.DataArray(np.arange(ny), dims=[ydim])
@@ -342,5 +345,19 @@ def dims_of_pointtype(point):
     else:
         raise ValueError('no such point, correct values are T, U and V')
     return xdim, ydim
+
+def geo_of_pointtype(point):
+    ''' returns the geo (lon/lat) pair for each point type (e.g. T, U, V) '''
+
+    if point == 'T':
+        lon = 'XC' ; lat = 'YC'
+    elif point == 'U':
+        lon = 'XG' ; lat = 'YC'
+    elif point == 'V':
+        lon = 'XC' ; lat = 'YG'
+    else:
+        raise ValueError('no such point, correct values are T, U and V')
+    return lon, lat
+
 
 
