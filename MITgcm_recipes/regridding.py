@@ -161,15 +161,33 @@ def logic_mask_from_missing_value(array, spval=None):
 
     return mask
 
-def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, 
+def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
                         lonname='lon', latname='lat', method='bilinear',
                         faces2blend=[], periodic=True, reuse_weights=True):
 
     # rename mitgcm grid variables
-    target_grid = mitgcm_grid.rename({'XC': 'lon', 'YC': 'lat'})
+    if point == 'T':
+        target_grid = mitgcm_grid.rename({'XC': 'lon', 'YC': 'lat'})
+        xdim='i' ; ydim='j'
+    elif point == 'U':
+        target_grid = mitgcm_grid.rename({'XG': 'lon', 'YC': 'lat'})
+        xdim='i_g' ; ydim='j'
+    elif point == 'V':
+        target_grid = mitgcm_grid.rename({'XC': 'lon', 'YG': 'lat'})
+        xdim='i' ; ydim='j_g'
+
 
     iface = target_grid['lon'].get_axis_num('face')
     nfaces = target_grid['lon'].shape[iface]
+
+    ix = target_grid['lon'].get_axis_num(xdim)
+    nx = target_grid['lon'].shape[ix]
+
+    iy = target_grid['lon'].get_axis_num(ydim)
+    ny = target_grid['lon'].shape[iy]
+
+    x = xr.DataArray(np.arange(nx), dims=[xdim])
+    y = xr.DataArray(np.arange(ny), dims=[ydim])
 
     # create  a dictionary of interpolators
     regridders = {}
@@ -207,7 +225,13 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables,
                 backup_dataface = backup_regridders[face](tmpds)
                 dataface = blend(dataface, backup_dataface, missing=0)
 
-            dataface = dataface.rename({'lon': 'XC', 'lat': 'YC'})
+            # rewrite the coordinates
+            dataface.rename({'lon': xdim})
+            dataface.rename({'lat': ydim})
+            dataface.coords[xdim] = x
+            dataface.coords[ydim] = y
+            dataface.drop(['lon', 'lat'])
+
             #stack/concatenate
             if face == 0:
                 data_all = dataface.expand_dims(dim='face')
