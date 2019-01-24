@@ -89,8 +89,6 @@ CONTAINS
       ALLOCATE ( X(ni,nj) )
 
 
-      PRINT *, SUM(mask)
-
       X = Xin
 
 
