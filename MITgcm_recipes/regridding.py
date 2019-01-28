@@ -1,7 +1,7 @@
 import xesmf as xe
 import gridfill
 import xarray as xr
-from MITgcm_recipes import mod_drown_sosie
+from MITgcm_recipes import mod_drown_sosie, akima1d
 import numpy as np
 import matplotlib.pylab as plt
 import scipy.interpolate as spint
@@ -215,6 +215,63 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
 
     return hremapped
 
+
+#--------------------
+# VERTICAL interpol
+#--------------------
+
+def vertical_interpolation(inputds, depth_out, list_variables,
+                           lonvar='lon', latvar='lat',
+                           depth_varin='depth',
+                           timevar=None):
+
+    """
+    depth_out: data_array
+
+    """
+    # We need to create a new depth coordinate for the dataset
+    outputds = xr.Dataset()
+    outputds.update({lonvar:inputds[lonvar]})
+    outputds.update({latvar:inputds[latvar]})
+    if timevar is not None:
+        outputds.update({timevar:inputds[timevar]})
+
+    outputds.update({'Z':depth_out})
+    # input depth vector
+    z_in = inputds[depth_varin].values
+    # output depth vector
+    z_out = depth_out.values
+    nz = len(z_out)
+
+    # test for direction (xmitgcm has depth negative)
+    if z_out.min() < 0:
+        z_out = - z_out
+
+    for variable in list_variables:
+        idx = inputds[variable].get_axis_num(lonvar)
+        idy = inputds[variable].get_axis_num(latvar)
+        nx = inputds[variable].shape[idx]
+        ny = inputds[variable].shape[idy]
+        if timevar is not None:
+            idt = inputds[variable].get_axis_num(timevar)
+            nt = inputds[variable].shape[idt]
+            data_out = np.empty((nt, nz, ny, nx))
+            for kt in range(nt):
+                data_in = inputds[variable].isel({timevar: kt}).values
+                data_out[kt,:,:,:] = akima1d.mod_akima_1d.vertical_interpolation(z_in, data_in, z_out)
+        else:
+            data_out = np.empty((nz, ny, nx))
+            data_in = inputds[variable].values
+            data_out[:] = akima1d.mod_akima_1d.vertical_interpolation(z_in, data_in, z_out)
+
+    if timevar is not None:
+        dims_out = [timevar, 'k', latvar, lonvar]
+    else:
+        dims_out = ['k', latvar, lonvar]
+
+    outputds.update({variable: xr.DataArray(data_out, dims=dims_out)})
+
+    return outputds
 
 #--------------------
 # helping functions
