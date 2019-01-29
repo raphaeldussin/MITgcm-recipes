@@ -27,7 +27,7 @@ def drown_field(dataset, variable, dims_drown=['lat', 'lon'], mask=None, periodi
 
     if nloopdims == 0:
         data = dataarray.values
-        drowned = drown_2d_field_sosie(data) #+options
+        data_drowned = drown_2d_field_sosie(data) #+options
     # I can't figure out a smarter way of doing this
     # but I'd love to make embedded loops invisible
     elif nloopdims == 1:
@@ -180,7 +180,7 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
                                               reuse_weights=reuse_weights)})
         if face in faces2blend:
             backup_regridders.update({face: xe.Regridder(tmpds, 
-                                                         target_grid.sel(face=face), 
+                                                         target_grid.sel(face=face),
                                                          'nearest_s2d', periodic=periodic,
                                                          filename='backup_regrid_face'+str(face)+'.nc',
                                                          reuse_weights=reuse_weights)})
