@@ -264,14 +264,37 @@ def vertical_interpolation(inputds, depth_out, list_variables,
             data_in = inputds[variable].values
             data_out[:] = akima1d.mod_akima_1d.vertical_interpolation(z_in, data_in, z_out)
 
-    if timevar is not None:
-        dims_out = [timevar, 'k', latvar, lonvar]
-    else:
-        dims_out = ['k', latvar, lonvar]
+        if timevar is not None:
+            dims_out = [timevar, 'k', latvar, lonvar]
+        else:
+            dims_out = ['k', latvar, lonvar]
 
-    outputds.update({variable: xr.DataArray(data_out, dims=dims_out)})
+        outputds.update({variable: xr.DataArray(data_out, dims=dims_out)})
 
     return outputds
+
+#--------------------
+# Masking
+#--------------------
+
+def mask_output(dataarray, mitgcm_grid, point='T'):
+    ''' mask the output from the regridding with mask from the model '''
+    if point == 'T':
+        fac = 'hFacC'
+    elif point == 'U':
+        fac = 'hFacW'
+    elif point == 'V':
+        fac = 'hFacS'
+    out = dataarray.where(mitgcm_grid[fac] != 0)
+    return out
+
+def mask_output_zeros(dataarray, mitgcm_grid, point='T'):
+    ''' mask the output from the regridding with mask from the model '''
+    tmp = mask_output(dataarray, mitgcm_grid, point=point)
+    out = tmp.fillna(0)
+    return out
+
+
 
 #--------------------
 # helping functions
