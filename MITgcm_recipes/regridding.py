@@ -148,7 +148,8 @@ def drown_2d_field_gridfill(array, mask=None, spval=None, periodic=True, itermax
 
 def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
                         lonname='lon', latname='lat', method='bilinear',
-                        faces2blend=[], periodic=True, reuse_weights=True):
+                        faces2blend=[], periodic=True, reuse_weights=True,
+                        regridname='regrid_face'):
 
     # rename mitgcm grid variables
     if point == 'T':
@@ -176,13 +177,13 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
         regridders.update({face: xe.Regridder(tmpds,
                                               target_grid.sel(face=face),
                                               method, periodic=periodic_face, 
-                                              filename='regrid_face'+str(face)+'.nc',
+                                              filename=regridname+str(face)+'.nc',
                                               reuse_weights=reuse_weights)})
         if face in faces2blend:
             backup_regridders.update({face: xe.Regridder(tmpds, 
                                                          target_grid.sel(face=face),
                                                          'nearest_s2d', periodic=periodic,
-                                                         filename='backup_regrid_face'+str(face)+'.nc',
+                                                         filename='backup_'+regridname+str(face)+'.nc',
                                                          reuse_weights=reuse_weights)})
 
 
@@ -285,7 +286,10 @@ def mask_output(dataarray, mitgcm_grid, point='T'):
         fac = 'hFacW'
     elif point == 'V':
         fac = 'hFacS'
-    out = dataarray.where(mitgcm_grid[fac] != 0)
+    if 'k' in dataarray.dims:
+        out = dataarray.where(mitgcm_grid[fac] != 0)
+    else:
+        out = dataarray.where(mitgcm_grid[fac].sel(k=0) != 0)
     return out
 
 def mask_output_zeros(dataarray, mitgcm_grid, point='T'):
