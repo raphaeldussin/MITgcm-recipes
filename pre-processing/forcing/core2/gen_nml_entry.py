@@ -12,8 +12,8 @@ def write_grid_info(ds, varname, fileout):
     nlat = len(ds.lat.values)
 
     line1 = ' ' + varname + '_lon0       = %.3fD0,' % (lon0) 
-    line2 = ' ' + varname + '_lon_inc    = %.3fDO,' % (lon_inc)
-    line3 = ' ' + varname + '_lat0       = %.6fDO,' % (lat0)
+    line2 = ' ' + varname + '_lon_inc    = %.3fD0,' % (lon_inc)
+    line3 = ' ' + varname + '_lat0       = %.6fD0,' % (lat0)
     line4 = ' ' + varname + '_lat_inc    = '
     ct=1
     for dlat in lat_inc:
