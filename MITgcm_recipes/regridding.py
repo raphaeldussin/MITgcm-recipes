@@ -148,7 +148,8 @@ def drown_2d_field_gridfill(array, mask=None, spval=None, periodic=True, itermax
 
 def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
                         lonname='lon', latname='lat', method='bilinear',
-                        faces2blend=[], periodic=True, reuse_weights=True,
+                        faces2blend=[], blend_mask={},
+                        periodic=True, reuse_weights=True,
                         regridname='regrid_face'):
 
     # rename mitgcm grid variables
@@ -180,9 +181,10 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
                                               filename=regridname+str(face)+'.nc',
                                               reuse_weights=reuse_weights)})
         if face in faces2blend:
+            print('Creating nearest neighbor weights for face', face)
             backup_regridders.update({face: xe.Regridder(tmpds, 
                                                          target_grid.sel(face=face),
-                                                         'nearest_s2d', periodic=periodic,
+                                                         'nearest_s2d', periodic=periodic_face,
                                                          filename='backup_'+regridname+str(face)+'.nc',
                                                          reuse_weights=reuse_weights)})
 
@@ -197,8 +199,10 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
 
             dataface = regridders[face](tmpds)
             if face in faces2blend:
+                print('running nn regridding for face', face)
                 backup_dataface = backup_regridders[face](tmpds)
-                dataface = blend(dataface, backup_dataface, missing=0)
+                #dataface = blend(dataface, backup_dataface, missing=0)
+                dataface = blend_using_mask(dataface, backup_dataface, blend_mask[face])
 
             # rewrite the coordinates
             dataface = rewrite_coords_regridded(dataface, coords, point=point)
@@ -316,6 +320,15 @@ def blend(da1, da2, missing=None):
                        coords = da1.coords)
     return da3
 
+def blend_using_mask(da1, da2, mask):
+    ''' blend dataarray1 with values from dataarray2
+    mask should be zero where values needed to be blended, 1 otherwise'''
+    tmp1 = da1.values
+    tmp2 = da2.values
+    tmp3 = (mask * tmp1) + ((1-mask) * tmp2)
+    da3 = xr.DataArray(tmp3, name=da1.name, dims=da1.dims,
+                       coords = da1.coords)
+    return da3
 
 def get_bounds(target_grid, face):
     ''' returns lon/lat min/max for llc face '''
