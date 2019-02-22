@@ -363,6 +363,15 @@ def restrict_periodicity(periodicity, full, subset, lonname='lon'):
     return periodicity
 
 
+def geo_roll_360_to_180(ds, londim):
+    ind = (np.abs(ds[londim]-180.)).argmin().values
+    ds = ds.roll(**{londim: -ind})
+    datalon=ds[londim].values
+    datalon[:ind] -=360
+    ds[londim] = datalon
+    return ds
+
+
 def int_mask_from_missing_value(array, spval=None):
     ''' create binary 1/0 mask for masked values in array '''
 

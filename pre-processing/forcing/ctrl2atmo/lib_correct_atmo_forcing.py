@@ -4,6 +4,7 @@ import pyresample as _pyresample
 import numpy as np
 import pandas as pd
 import struct, sys
+import MITgcm_recipes
 
 def read_forcing_grid(filein, lonvar='lon', latvar='lat'):
     ''' read coordinates of forcing grid '''
@@ -36,7 +37,7 @@ def read_forcing_from_binary(filein, varname, lon, lat,
     return ds
        
 
-def read_ctrl_file(varname, optim_cycle, ntimes, grid_dir): 
+def read_ctrl_file(varname, optim_cycle, ntimes, grid_dir, refdate='2002-01-01', ncname=None): 
     ''' read the content of the XX file '''
     astemd = xmitgcm.utils.get_extra_metadata(domain='aste',nx=270)
 
@@ -48,8 +49,13 @@ def read_ctrl_file(varname, optim_cycle, ntimes, grid_dir):
     grid = xmitgcm.open_mdsdataset(grid_dir, prefix=['XC','YC'], geometry='llc', 
                                    extra_metadata=astemd, nx=astemd['nx'])
 
-    print('reading', tmp[list(tmp.keys())[0]])
-    data = xr.DataArray(tmp[list(tmp.keys())[0]], dims=['time', 'face', 'j', 'i'])
+    #print('reading', tmp[list(tmp.keys())[0]])
+    data = xr.DataArray(tmp[list(tmp.keys())[0]], dims=['time', 'face', 'j', 'i'],
+                        coords={
+                             'time': pd.date_range(refdate, freq='14D', periods=419),
+                             'reference_time': pd.Timestamp(refdate)})
+
+    data.name = ncname
 
     return data, grid
 
@@ -102,6 +108,22 @@ def regrid_to_forcing(lon_atm, lat_atm, grid_ctrl, data_ctrl,
 
     return ds
 
+def regrid_to_model(ds, filegrid, varname):
+
+    grid = xr.open_dataset(filegrid)
+
+    mask_face2 = np.ones((270, 270))
+    mask_face2[130:140,130:140] = 0
+    mask_north_pole = {2: mask_face2}
+
+    out = MITgcm_recipes.regridding.regrid_2_mitgcm_llc(ds, grid, [varname], 
+                                                        method='bilinear',
+                                                        faces2blend=[2], blend_mask=mask_north_pole,
+                                                        lonname='lon', latname='lat', point='T', 
+                                                        periodic=True, reuse_weights=True)
+    out = out.transpose(*('time','face','j','i'))
+    return out
+
 def resample_ctrl_to_forcing_dates(ds_ctrl, year, freq='3H'):
     ''' resample the ctrl to the actual forcing date/time '''
     #cfirstyear = str(ds_ctrl['time'].dt.year.min().values)
@@ -121,12 +143,14 @@ def add_correction(ds_forcing, ds_ctrl_resampled, mult_fact):
     ''' add the resampled correction onto forcing field '''
     # xarray is going to broadcast ds_ctrl_resampled onto the forcing time
     ds_out = ds_forcing + mult_fact * ds_ctrl_resampled
+    ds_out = ds_out.transpose(*('time','face','j','i'))
     return ds_out
 
 def write_to_binary(ds, variable, fileout, precision='single'):
     ''' write variable from dataset ds to fileout with precision '''
     # write data to binary files
     fid   = open(fileout, "wb")
+    print(ds[variable].values.shape)
     flatdata = ds[variable].values.flatten()
     if precision == 'single':
         if sys.byteorder == 'little':
