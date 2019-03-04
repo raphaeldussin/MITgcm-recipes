@@ -1,3 +1,4 @@
+import setuptools
 from numpy.distutils.core import setup, Extension
 
 akima1d = Extension(name = 'MITgcm_recipes.akima1d',
