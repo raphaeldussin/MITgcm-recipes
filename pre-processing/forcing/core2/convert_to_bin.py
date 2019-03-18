@@ -7,7 +7,7 @@ def write_to_binary(ds, variable, fileout, precision='single'):
     ''' write variable from dataset ds to fileout with precision '''
     # write data to binary files
     fid   = open(fileout, "wb")
-    flatdata = ds[variable].values.flatten()
+    flatdata = ds[variable].transpose(*('TIME','LAT','LON')).values.flatten()
     if precision == 'single':
         if sys.byteorder == 'little':
             tmp = flatdata.astype(np.dtype('f')).byteswap(True).tobytes()
@@ -43,7 +43,7 @@ for year in np.arange(1948,2009+1):
 
     for var in listvar:
         print('working on variable', var)
-        fileout = core_dir + 'binaries/' + var + '_CORE2_y' + str(year)
+        fileout = core_dir + 'binaries/' + var + '_CORE2_' + str(year)
         write_to_binary(ds, var, fileout, precision='single')
 
 # daily
@@ -65,7 +65,7 @@ for year in np.arange(1948,2009+1):
 
     for var in listvar:
         print('working on variable', var)
-        fileout = core_dir + 'binaries/' + var + '_CORE2_y' + str(year)
+        fileout = core_dir + 'binaries/' + var + '_CORE2_' + str(year)
         write_to_binary(ds, var, fileout, precision='single')
 
 # monthly
@@ -81,6 +81,6 @@ for year in np.arange(1948,2009+1):
     # total precip + unit conversion
     dsyear['PRECIP'] = (dsyear['RAIN'] + dsyear['SNOW']) /1000. # [kg.m-2.s-1] / [kg/m3] = [m/s]
 
-    fileout = core_dir + 'binaries/' + 'PRECIP' + '_CORE2_y' + str(year)
+    fileout = core_dir + 'binaries/' + 'PRECIP' + '_CORE2_' + str(year)
     write_to_binary(dsyear, 'PRECIP', fileout, precision='single')
 
