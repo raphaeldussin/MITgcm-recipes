@@ -175,14 +175,14 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
         tmpds = input_dataset.sel({lonname: slice(lonmin, lonmax),
                                    latname: slice(latmin, latmax)}) 
         periodic_face = restrict_periodicity(periodic, input_dataset, tmpds, lonname)
-        regridders.update({face: xe.Regridder(tmpds.rename({'LONGITUDE': 'lon', 'LATITUDE': 'lat'}),
+        regridders.update({face: xe.Regridder(tmpds.rename({lonname: 'lon', latname: 'lat'}),
                                               target_grid.sel(face=face),
                                               method, periodic=periodic_face, 
                                               filename=regridname+str(face)+'.nc',
                                               reuse_weights=reuse_weights)})
         if face in faces2blend:
             print('Creating nearest neighbor weights for face', face)
-            backup_regridders.update({face: xe.Regridder(tmpds.rename({'LONGITUDE': 'lon', 'LATITUDE': 'lat'}), 
+            backup_regridders.update({face: xe.Regridder(tmpds.rename({lonname: 'lon', latname: 'lat'}), 
                                                          target_grid.sel(face=face),
                                                          'nearest_s2d', periodic=periodic_face,
                                                          filename='backup_'+regridname+str(face)+'.nc',
@@ -197,10 +197,10 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
             tmpds = input_dataset[variable].sel({lonname: slice(lonmin, lonmax),
                                                  latname: slice(latmin, latmax)})
 
-            dataface = regridders[face](tmpds.rename({'LONGITUDE': 'lon', 'LATITUDE': 'lat'}))
+            dataface = regridders[face](tmpds.rename({lonname: 'lon', latname: 'lat'}))
             if face in faces2blend:
                 print('running nn regridding for face', face)
-                backup_dataface = backup_regridders[face](tmpds.rename({'LONGITUDE': 'lon', 'LATITUDE': 'lat'}))
+                backup_dataface = backup_regridders[face](tmpds.rename({lonname: 'lon', latname: 'lat'}))
                 #dataface = blend(dataface, backup_dataface, missing=0)
                 dataface = blend_using_mask(dataface, backup_dataface, blend_mask[face])
 
