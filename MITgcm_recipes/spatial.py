@@ -1,6 +1,7 @@
 #----- spatial transformation (averages,...)
 import numpy as _np
 import xarray as _xr
+import xgcm
 
 def avg3d_llc(DataArray, darea=None, dz=None):
     ''' return the 3dimensional average of a xarray.DataArray in the LLC geometry '''
@@ -58,3 +59,36 @@ def hov_time_depth_llc(DataArray):
     norm = (DataArray['rA']).where(DataArray !=0).sum(dim=['face','j','i'])
     out = wa / norm
     return out
+
+#----- velocity rotation ----
+
+def rotate_to_llc(u, v, grid):
+    """ rotate eastward/northward u/v velocities to the i/j grid axes
+    u : data array for zonal veloicty
+    v : data array for meridional velocity
+    grid : model grid, must contain CS and SN
+    """
+
+    return None
+
+def rotate_llc_to_geo(u, v, grid, face_connections):
+    """ interp velocities to cell center and rotate
+    to geographical axes
+    u : data array for zonal velocity
+    v : data array for meridional velocity
+    grid : model grid, must contain CS and SN
+    """
+    
+    # this is what it should be, but xgcm bug
+    #grid = xgcm.Grid(grid, face_connections=face_connections)
+    #u_center = grid.interp( u, 'X', boundary='extend')
+    #v_center = grid.interp( v, 'Y', boundary='extend')
+
+    #u_geo = u_center * grid['CS'] + v_center * grid['SN']
+    #v_geo = v_center * grid['CS'] + u_center * grid['SN']
+
+    # this is a wrong but works
+    u_geo = u.rename({'i_g': 'i'}) * grid['CS'] - v.rename({'j_g': 'j'}) * grid['SN']
+    v_geo = v.rename({'j_g': 'j'}) * grid['CS'] + u.rename({'i_g': 'i'}) * grid['SN']
+
+    return u_geo, v_geo
