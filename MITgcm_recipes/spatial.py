@@ -79,7 +79,6 @@ def rotate_llc_to_geo(u, v, grid, face_connections, boundary='extend'):
     grid : model grid, must contain CS and SN
     """
     
-    # this is what it should be, but xgcm bug
     xgrid = xgcm.Grid(grid, face_connections=face_connections)
     uv_center = xgrid.interp_2d_vector({'X': u, 'Y': v}, boundary=boundary)
 
