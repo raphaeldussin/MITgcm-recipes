@@ -71,7 +71,7 @@ def rotate_to_llc(u, v, grid):
 
     return None
 
-def rotate_llc_to_geo(u, v, grid, face_connections):
+def rotate_llc_to_geo(u, v, grid, face_connections, boundary='extend'):
     """ interp velocities to cell center and rotate
     to geographical axes
     u : data array for zonal velocity
@@ -80,15 +80,14 @@ def rotate_llc_to_geo(u, v, grid, face_connections):
     """
     
     # this is what it should be, but xgcm bug
-    #grid = xgcm.Grid(grid, face_connections=face_connections)
-    #u_center = grid.interp( u, 'X', boundary='extend')
-    #v_center = grid.interp( v, 'Y', boundary='extend')
+    xgrid = xgcm.Grid(grid, face_connections=face_connections)
+    uv_center = xgrid.interp_2d_vector({'X': u, 'Y': v}, boundary=boundary)
 
-    #u_geo = u_center * grid['CS'] + v_center * grid['SN']
-    #v_geo = v_center * grid['CS'] + u_center * grid['SN']
+    u_geo = uv_center['X'] * grid['CS'] - uv_center['Y'] * grid['SN']
+    v_geo = uv_center['Y'] * grid['CS'] + uv_center['X'] * grid['SN']
 
     # this is a wrong but works
-    u_geo = u.rename({'i_g': 'i'}) * grid['CS'] - v.rename({'j_g': 'j'}) * grid['SN']
-    v_geo = v.rename({'j_g': 'j'}) * grid['CS'] + u.rename({'i_g': 'i'}) * grid['SN']
+    #u_geo = u.rename({'i_g': 'i'}) * grid['CS'] - v.rename({'j_g': 'j'}) * grid['SN']
+    #v_geo = v.rename({'j_g': 'j'}) * grid['CS'] + u.rename({'i_g': 'i'}) * grid['SN']
 
     return u_geo, v_geo
