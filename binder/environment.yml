@@ -1,0 +1,17 @@
+name: root
+channels:
+  - conda-forge
+dependencies:
+  - python=3.6
+  - xarray
+  - numpy
+  - esmpy
+  - pandas
+  - netcdf4
+  - matplotlib
+  - cartopy
+  - gridfill
+  - pyresample
+  - glob
+  - gsw
+  - xgcm
