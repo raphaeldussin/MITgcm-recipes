@@ -27,6 +27,7 @@ def avg3d_llc(DataArray, darea=None, dz=None):
 def avg3d_llc_xr(DataArray):
     ''' return the 3dimensional average of a xarray.DataArray in the LLC geometry 
         xarray version '''
+    DataArray = DataArray.fillna(0)
     wa = (DataArray * DataArray['rA'] * DataArray['drF']).where(DataArray !=0).sum(dim=['face','k','j','i'])
     norm = (DataArray['rA'] * DataArray['drF']).where(DataArray !=0).sum(dim=['face','k','j','i'])
     out = wa / norm
@@ -49,6 +50,15 @@ def avg2d_llc(DataArray, darea=None):
     out = (data * darea * mask).sum(axis=3).sum(axis=2).sum(axis=1) / \
           (darea * mask).sum(axis=3).sum(axis=2).sum(axis=1) 
 
+    return out
+
+def avg2d_llc_xr(DataArray):
+    ''' return the 3dimensional average of a xarray.DataArray in the LLC geometry 
+        xarray version '''
+    DataArray = DataArray.fillna(0)
+    wa = (DataArray * DataArray['rA'] ).where(DataArray !=0).sum(dim=['face','j','i'])
+    norm = (DataArray['rA'] ).where(DataArray !=0).sum(dim=['face','j','i'])
+    out = wa / norm
     return out
 
 #----- hovmullers ----
@@ -90,3 +100,13 @@ def rotate_llc_to_geo(u, v, grid, face_connections, boundary='extend'):
     #v_geo = v.rename({'j_g': 'j'}) * grid['CS'] + u.rename({'i_g': 'i'}) * grid['SN']
 
     return u_geo, v_geo
+
+#------- subsetting,...
+
+def extract_box(ds, lonmin=-180, lonmax=180,
+                    latmin=-90, latmax=90):
+
+    tmp = ds.where(ds.XC >= lonmin).where(ds.XC <= lonmax)
+    out = tmp.where(ds.YC >= latmin).where(ds.YC <= latmax)
+
+    return out
