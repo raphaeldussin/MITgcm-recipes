@@ -172,9 +172,14 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
     backup_regridders = {}
     for face in range(nfaces):
         lonmin, lonmax, latmin, latmax = get_bounds(target_grid, face)
-        tmpds = input_dataset.sel({lonname: slice(lonmin, lonmax),
-                                   latname: slice(latmin, latmax)}) 
-        periodic_face = restrict_periodicity(periodic, input_dataset, tmpds, lonname)
+        if len(input_dataset[lonname].dims) == 1:
+            tmpds = input_dataset.sel({lonname: slice(lonmin, lonmax),
+                                       latname: slice(latmin, latmax)}) 
+            periodic_face = restrict_periodicity(periodic, input_dataset, tmpds, lonname)
+        else:
+            tmpds = input_dataset
+            periodic_face = periodic
+            # TO DO: subset
         regridders.update({face: xe.Regridder(tmpds.rename({lonname: 'lon', latname: 'lat'}),
                                               target_grid.sel(face=face),
                                               method, periodic=periodic_face, 
@@ -194,8 +199,13 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
     for variable in list_variables:
         for face in range(nfaces):
             lonmin, lonmax, latmin, latmax = get_bounds(target_grid, face)
-            tmpds = input_dataset[variable].sel({lonname: slice(lonmin, lonmax),
-                                                 latname: slice(latmin, latmax)})
+
+            if len(input_dataset[lonname].dims) == 1:
+                tmpds = input_dataset[variable].sel({lonname: slice(lonmin, lonmax),
+                                                     latname: slice(latmin, latmax)})
+            else:
+                tmpds = input_dataset[variable]
+                # TO DO: subset
 
             dataface = regridders[face](tmpds.rename({lonname: 'lon', latname: 'lat'}))
             if face in faces2blend:
