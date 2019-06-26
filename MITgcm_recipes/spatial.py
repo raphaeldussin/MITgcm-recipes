@@ -2,7 +2,7 @@
 import numpy as _np
 import xarray as _xr
 import xgcm
-
+# OBSOLETE
 def avg3d_llc(DataArray, darea=None, dz=None):
     ''' return the 3dimensional average of a xarray.DataArray in the LLC geometry '''
     # MITgcm uses O as missing value
@@ -33,6 +33,7 @@ def avg3d_llc_xr(DataArray):
     out = wa / norm
     return out
 
+# OBSOLETE
 def avg2d_llc(DataArray, darea=None):
     ''' return the 2dimensional average of a xarray.DataArray in the LLC geometry '''
     # MITgcm uses O as missing value

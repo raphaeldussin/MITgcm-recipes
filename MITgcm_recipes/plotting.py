@@ -10,6 +10,7 @@ import xarray as _xr
 from .data_organization import *
 
 # plot ASTE on the best possible projection
+# OBSOLETE
 def plot_ASTE(dataarray, dict_plt):
     ''' make a plot for ASTE from a xmitgcm dataarray
     '''
@@ -105,6 +106,7 @@ def plot_ASTE(dataarray, dict_plt):
     return fig
         
 
+# OBSOLETE
 def plot_ASTE_with_grids(dataarray, dict_plt, dirgrid, facet1_grid='ASTE_FACET1.nc',
                                                        facet3_grid='ASTE_FACET3.nc',
                                                        facet4_grid='ASTE_FACET4.nc',
