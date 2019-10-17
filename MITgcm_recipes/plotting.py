@@ -174,13 +174,14 @@ def plot_ASTE_with_grids(dataarray, dict_plt, dirgrid, facet1_grid='ASTE_FACET1.
 #
     return fig
 
-def plot_ASTE_pyresample(dataarray, dict_plt, hres=0.33, proj=_cart.crs.PlateCarree(), etopofile=None):
+def plot_ASTE_pyresample(dataarray, dict_plt, hres=0.33, proj=_cart.crs.PlateCarree(), 
+                         etopofile=None, lon='XC', lat='YC'):
     ''' plot ASTE after regridding with pyresample '''
     import pyresample as _pyresample
 
     # input grid
-    lons_in = dataarray['XC'].values.ravel()
-    lats_in = dataarray['YC'].values.ravel()
+    lons_in = dataarray[lon].values.ravel()
+    lats_in = dataarray[lat].values.ravel()
 
     grid_src = _pyresample.geometry.SwathDefinition(lons=lons_in, lats=lats_in)
 
