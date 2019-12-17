@@ -217,9 +217,13 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
             # rewrite the coordinates
             dataface = rewrite_coords_regridded(dataface, coords, point=point)
 
+            # RD test: add a face dimension
+            dataface = dataface.expand_dims(dim='face')
+            
             #stack/concatenate
             if face == 0:
-                data_all = dataface.expand_dims(dim='face')
+                #data_all = dataface.expand_dims(dim='face')
+                data_all = dataface
             else:
                 data_all = xr.concat([data_all, dataface], dim='face')
 
