@@ -204,8 +204,10 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
             lonmin, lonmax, latmin, latmax = get_bounds(target_grid, face)
 
             if len(input_dataset[lonname].dims) == 1:
-                tmpds = input_dataset[variable].sel({lonname: slice(lonmin, lonmax),
-                                                     latname: slice(latmin, latmax)})
+                tmpds = input_dataset[variable]
+                # subset not robust
+                #tmpds = input_dataset[variable].sel({lonname: slice(lonmin, lonmax),
+                #                                     latname: slice(latmin, latmax)})
             else:
                 tmpds = input_dataset[variable]
                 # TO DO: subset
