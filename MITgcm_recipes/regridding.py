@@ -173,9 +173,12 @@ def regrid_2_mitgcm_llc(input_dataset, mitgcm_grid, list_variables, point='T',
     for face in range(nfaces):
         lonmin, lonmax, latmin, latmax = get_bounds(target_grid, face)
         if len(input_dataset[lonname].dims) == 1:
-            tmpds = input_dataset.sel({lonname: slice(lonmin, lonmax),
-                                       latname: slice(latmin, latmax)}) 
-            periodic_face = restrict_periodicity(periodic, input_dataset, tmpds, lonname)
+            tmpds = input_dataset
+            periodic_face = periodic
+            # subset not robust
+            #tmpds = input_dataset.sel({lonname: slice(lonmin, lonmax),
+            #                           latname: slice(latmin, latmax)}) 
+            #periodic_face = restrict_periodicity(periodic, input_dataset, tmpds, lonname)
         else:
             tmpds = input_dataset
             periodic_face = periodic
